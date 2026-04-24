@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sticky Note Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --cork:       #c09a6e;
+  --cork-dark:  #9a7a50;
+  --toolbar-bg: #28211c;
+  --toolbar-fg: #f5ede0;
+  --panel:      rgba(255,255,255,0.84);
+  --panel-border: rgba(255,255,255,0.55);
+  --text-main:  #2a1f16;
+  --text-muted: #7a6a5a;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--cork);
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(180,140,90,0.45) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(150,110,60,0.35) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Ccircle cx='1.5' cy='1.5' r='0.8' fill='rgba(80,45,10,0.09)'/%3E%3Ccircle cx='4.5' cy='4.5' r='0.6' fill='rgba(80,45,10,0.07)'/%3E%3C/svg%3E");
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  background: var(--toolbar-bg);
+  color: var(--toolbar-fg);
+  padding: 0 1.25rem;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.toolbar-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.board-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  color: var(--toolbar-fg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  padding: 2px 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.board-title-input:focus { border-bottom-color: rgba(255,255,255,0.35); }
+
+.tbtn {
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.18);
+  color: var(--toolbar-fg);
+  padding: 6px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.tbtn:hover { background: rgba(255,255,255,0.2); }
+.tbtn.accent { background: #e8c97a; color: #28211c; border-color: transparent; font-weight: 600; }
+.tbtn.accent:hover { background: #f0d88a; }
+.tbtn-icon { font-size: 15px; }
+
+/* ── Board ── */
+.board {
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+
+/* ── Column ── */
+.column {
+  flex: 0 0 270px;
+  background: var(--panel);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 14px;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 320px;
+}
+.column.drag-over {
+  background: rgba(255,255,255,0.96);
+  border-color: rgba(90,60,20,0.35);
+  box-shadow: inset 0 0 0 2px rgba(90,60,20,0.15);
+}
+
+.col-header {
+  padding: 13px 14px 11px;
+  border-bottom: 1.5px solid rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.col-color-bar {
+  width: 4px;
+  height: 26px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.col-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  outline: none;
+  padding: 2px 3px;
+  transition: border-color 0.15s;
+}
+.col-title-input:focus { border-bottom-color: var(--cork-dark); }
+.col-count {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0,0,0,0.07);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.col-add-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 19px;
+  line-height: 1;
+  padding: 1px 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.col-add-btn:hover { color: var(--text-main); }
+.col-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(0,0,0,0.2);
+  font-size: 14px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.col-remove-btn:hover { color: #c0392b; }
+
+.notes-area {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  flex: 1;
+  min-height: 160px;
+}
+
+.empty-drop {
+  flex: 1;
+  min-height: 80px;
+  border: 2px dashed rgba(0,0,0,0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: rgba(0,0,0,0.28);
+  margin: 4px 0;
+}
+
+/* ── Sticky Notes ── */
+.note {
+  position: relative;
+  padding: 11px 13px 26px;
+  border-radius: 3px;
+  box-shadow: 2px 3px 7px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1);
+  cursor: grab;
+  transition: box-shadow 0.15s;
+  user-select: none;
+}
+.note:hover { box-shadow: 3px 5px 14px rgba(0,0,0,0.25); z-index: 5; position: relative; }
+.note.dragging { opacity: 0.55; cursor: grabbing; }
+
+.note::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 10px;
+  background: rgba(255,255,255,0.55);
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.note-text {
+  font-family: 'Caveat', cursive;
+  font-size: 17px;
+  line-height: 1.45;
+  color: var(--text-main);
+  word-break: break-word;
+  pointer-events: none;
+}
+.note-author {
+  position: absolute;
+  bottom: 7px;
+  left: 12px;
+  font-size: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  opacity: 0.45;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+}
+.note-delete {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(0,0,0,0.08);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  color: var(--text-main);
+  line-height: 1;
+}
+.note:hover .note-delete { opacity: 1; }
+.note-delete:hover { background: rgba(200,50,50,0.22); }
+
+/* ── Add column button ── */
+.add-col-btn {
+  flex: 0 0 auto;
+  width: 48px;
+  background: rgba(255,255,255,0.3);
+  border: 2.5px dashed rgba(255,255,255,0.5);
+  border-radius: 12px;
+  height: 72px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: rgba(255,255,255,0.65);
+  align-self: flex-start;
+  transition: background 0.15s, color 0.15s;
+}
+.add-col-btn:hover { background: rgba(255,255,255,0.55); color: #5a4a3a; }
+
+/* ── Modal ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem 1.5rem 1.25rem;
+  width: 400px;
+  max-width: 92vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.32);
+  transform: translateY(14px) scale(0.98);
+  transition: transform 0.18s;
+}
+.overlay.open .modal { transform: none; }
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-title span { font-size: 20px; }
+
+.field { margin-bottom: 14px; }
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+textarea.field-input {
+  width: 100%;
+  border: 1.5px solid #e2d6cc;
+  border-radius: 9px;
+  padding: 9px 11px;
+  font-family: 'Caveat', cursive;
+  font-size: 19px;
+  line-height: 1.4;
+  color: var(--text-main);
+  resize: vertical;
+  min-height: 88px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+textarea.field-input:focus { border-color: var(--cork-dark); }
+input.field-input, select.field-input {
+  width: 100%;
+  border: 1.5px solid #e2d6cc;
+  border-radius: 9px;
+  padding: 7px 11px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-main);
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+input.field-input:focus, select.field-input:focus { border-color: var(--cork-dark); }
+
+.color-row { display: flex; gap: 9px; flex-wrap: wrap; }
+.swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.14);
+}
+.swatch:hover { transform: scale(1.12); }
+.swatch.active { border-color: #28211c; transform: scale(1.12); }
+
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0e8e0;
+}
+.btn-cancel {
+  background: #f4ede6;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  color: #5a4a3a;
+  cursor: pointer;
+}
+.btn-cancel:hover { background: #ebe0d4; }
+.btn-submit {
+  background: var(--toolbar-bg);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  color: #fff;
+  cursor: pointer;
+}
+.btn-submit:hover { background: #3e3028; }
+
+/* ── Settings modal ── */
+.settings-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.settings-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9f4ef;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.settings-item input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  outline: none;
+  padding: 1px 3px;
+}
+.settings-item input:focus { border-bottom-color: var(--cork-dark); }
+.settings-rm {
+  background: none;
+  border: none;
+  color: #c0392b;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 2px;
+  opacity: 0.6;
+  transition: opacity 0.1s;
+}
+.settings-rm:hover { opacity: 1; }
+.btn-add-col {
+  background: #f4ede6;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  color: #5a4a3a;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-add-col:hover { background: #ebe0d4; }
+
+/* ── Column color accents ── */
+.col-accent-0 { background: #f9a825; }
+.col-accent-1 { background: #42a5f5; }
+.col-accent-2 { background: #66bb6a; }
+.col-accent-3 { background: #ab47bc; }
+.col-accent-4 { background: #ef5350; }
+
+@media print {
+  .toolbar, .col-add-btn, .col-add-btn, .note-delete, .add-col-btn,
+  .col-add-btn, .col-remove-btn { display: none !important; }
+  body { background: #f9f6f0; }
+  .board { flex-wrap: wrap; padding: 8px; gap: 10px; }
+  .column { border: 1px solid #ccc; break-inside: avoid; flex: 0 0 220px; }
+  .note { box-shadow: none; border: 1px solid rgba(0,0,0,0.15); }
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOOLBAR ── -->
+<div class="toolbar">
+  <span class="toolbar-icon">📌</span>
+  <input class="board-title-input" id="boardTitle" type="text" value="Class Sticky Note Board" maxlength="60" spellcheck="false" />
+  <button class="tbtn accent" onclick="openAddNote(null)">
+    <span class="tbtn-icon">＋</span> Add note
+  </button>
+  <button class="tbtn" onclick="openSettings()">
+    <span class="tbtn-icon">⚙</span> Columns
+  </button>
+  <button class="tbtn" onclick="window.print()">
+    <span class="tbtn-icon">🖨</span> Print
+  </button>
+  <button class="tbtn" onclick="confirmClear()">
+    <span class="tbtn-icon">🗑</span> Clear
+  </button>
+</div>
+
+<!-- ── BOARD ── -->
+<div class="board" id="board">
+  <button class="add-col-btn" onclick="quickAddColumn()" title="Add column">＋</button>
+</div>
+
+<!-- ── ADD NOTE MODAL ── -->
+<div class="overlay" id="noteOverlay" onclick="overlayClick(event,'noteOverlay')">
+  <div class="modal">
+    <div class="modal-title"><span>🗒</span> Add a note</div>
+
+    <div class="field">
+      <label class="field-label">Note text</label>
+      <textarea class="field-input" id="noteText" placeholder="Write your note here…" maxlength="320"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Author name (optional)</label>
+      <input class="field-input" id="noteAuthor" type="text" placeholder="e.g. Sarah" maxlength="40" />
+    </div>
+
+    <div class="field">
+      <label class="field-label">Column</label>
+      <select class="field-input" id="noteColumn"></select>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Colour</label>
+      <div class="color-row" id="colorRow"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeOverlay('noteOverlay')">Cancel</button>
+      <button class="btn-submit" onclick="submitNote()">Add note</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div class="overlay" id="settingsOverlay" onclick="overlayClick(event,'settingsOverlay')">
+  <div class="modal">
+    <div class="modal-title"><span>⚙</span> Manage columns</div>
+    <div class="settings-list" id="settingsList"></div>
+    <button class="btn-add-col" onclick="addColFromSettings()">＋ Add column</button>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeOverlay('settingsOverlay')">Close</button>
+      <button class="btn-submit" onclick="applySettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── DATA ── */
+const COLORS = [
+  { id:'yellow', bg:'#fff9c4', label:'Yellow'  },
+  { id:'pink',   bg:'#fce4ec', label:'Pink'    },
+  { id:'blue',   bg:'#e3f2fd', label:'Blue'    },
+  { id:'green',  bg:'#e8f5e9', label:'Green'   },
+  { id:'orange', bg:'#fff3e0', label:'Orange'  },
+  { id:'purple', bg:'#f3e5f5', label:'Purple'  },
+  { id:'mint',   bg:'#e0f2f1', label:'Mint'    },
+  { id:'peach',  bg:'#fbe9e7', label:'Peach'   },
+];
+
+const DEFAULTS = [
+  { id:'c1', title:'What I Know'          },
+  { id:'c2', title:'What I Want to Know'  },
+  { id:'c3', title:'What I Learned'       },
+];
+
+let state = loadState();
+let selectedColor = 'yellow';
+let draggingId   = null;
+
+/* ── PERSISTENCE ── */
+function loadState() {
+  try {
+    const s = localStorage.getItem('stickyBoardV2');
+    if (s) return JSON.parse(s);
+  } catch(e) {}
+  return { columns: DEFAULTS.map(c=>({...c})), notes: [] };
+}
+function saveState() {
+  try { localStorage.setItem('stickyBoardV2', JSON.stringify(state)); } catch(e) {}
+}
+
+/* ── RENDER ── */
+function render() {
+  const board = document.getElementById('board');
+  const addBtn = board.querySelector('.add-col-btn');
+  board.querySelectorAll('.column').forEach(el=>el.remove());
+
+  state.columns.forEach((col, idx) => {
+    const notes = state.notes.filter(n=>n.colId===col.id);
+    const colEl = document.createElement('div');
+    colEl.className = 'column';
+    colEl.dataset.colId = col.id;
+
+    colEl.innerHTML = `
+      <div class="col-header">
+        <div class="col-color-bar col-accent-${idx % 5}"></div>
+        <input class="col-title-input" value="${esc(col.title)}" placeholder="Column name" maxlength="40" />
+        <span class="col-count">${notes.length}</span>
+        <button class="col-add-btn" title="Add note here">＋</button>
+        <button class="col-remove-btn" title="Remove column">✕</button>
+      </div>
+      <div class="notes-area" data-col="${col.id}">
+        ${notes.length===0 ? '<div class="empty-drop">Drop notes here</div>' : ''}
+        ${notes.map(renderNoteHtml).join('')}
+      </div>
+    `;
+
+    board.insertBefore(colEl, addBtn);
+    bindColumnEvents(colEl, col, notes);
+  });
+
+  populateColumnSelect();
+}
+
+function renderNoteHtml(n) {
+  const c = COLORS.find(c=>c.id===n.color) || COLORS[0];
+  const r = n.rot || 0;
+  return `
+    <div class="note" draggable="true" data-nid="${n.id}"
+         style="background:${c.bg};transform:rotate(${r}deg)">
+      <p class="note-text">${esc(n.text)}</p>
+      ${n.author ? `<span class="note-author">${esc(n.author)}</span>` : ''}
+      <button class="note-delete" title="Delete note">✕</button>
+    </div>
+  `;
+}
+
+function bindColumnEvents(colEl, col, notes) {
+  // Editable title
+  colEl.querySelector('.col-title-input').addEventListener('change', e=>{
+    const c = state.columns.find(c=>c.id===col.id);
+    if(c){ c.title=e.target.value; saveState(); render(); }
+  });
+
+  // Add note to this column
+  colEl.querySelector('.col-add-btn').addEventListener('click', ()=>openAddNote(col.id));
+
+  // Remove column
+  colEl.querySelector('.col-remove-btn').addEventListener('click', ()=>{
+    if(state.columns.length<=1){ alert('A board needs at least one column.'); return; }
+    if(notes.length && !confirm(`Remove "${col.title}" and its ${notes.length} note(s)?`)) return;
+    state.columns = state.columns.filter(c=>c.id!==col.id);
+    state.notes   = state.notes.filter(n=>n.colId!==col.id);
+    saveState(); render();
+  });
+
+  // Drag-and-drop onto column
+  const area = colEl.querySelector('.notes-area');
+  area.addEventListener('dragover', e=>{ e.preventDefault(); colEl.classList.add('drag-over'); });
+  area.addEventListener('dragleave', e=>{ if(!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over'); });
+  area.addEventListener('drop', e=>{
+    e.preventDefault();
+    colEl.classList.remove('drag-over');
+    if(draggingId){
+      const n = state.notes.find(n=>n.id===draggingId);
+      if(n){ n.colId=col.id; saveState(); render(); }
+      draggingId=null;
+    }
+  });
+
+  // Note drag handlers + delete
+  colEl.querySelectorAll('.note').forEach(noteEl=>{
+    noteEl.addEventListener('dragstart', ()=>{ draggingId=noteEl.dataset.nid; noteEl.classList.add('dragging'); });
+    noteEl.addEventListener('dragend',   ()=>noteEl.classList.remove('dragging'));
+    noteEl.querySelector('.note-delete').addEventListener('click', e=>{
+      e.stopPropagation();
+      state.notes = state.notes.filter(n=>n.id!==noteEl.dataset.nid);
+      saveState(); render();
+    });
+  });
+}
+
+/* ── ADD NOTE ── */
+function openAddNote(colId) {
+  buildColorRow();
+  populateColumnSelect(colId);
+  document.getElementById('noteText').value   = '';
+  document.getElementById('noteAuthor').value = '';
+  openOverlay('noteOverlay');
+  setTimeout(()=>document.getElementById('noteText').focus(), 80);
+}
+
+function submitNote() {
+  const text = document.getElementById('noteText').value.trim();
+  if(!text){ document.getElementById('noteText').focus(); return; }
+  const colId = document.getElementById('noteColumn').value || state.columns[0]?.id;
+  state.notes.push({
+    id:     'n'+Date.now()+Math.random().toString(36).slice(2,6),
+    text,
+    author: document.getElementById('noteAuthor').value.trim(),
+    color:  selectedColor,
+    colId,
+    rot:    +(Math.random()*4.4-2.2).toFixed(1),
+  });
+  saveState(); render(); closeOverlay('noteOverlay');
+}
+
+/* ── SETTINGS ── */
+function openSettings() {
+  renderSettingsList();
+  openOverlay('settingsOverlay');
+}
+
+function renderSettingsList() {
+  const list = document.getElementById('settingsList');
+  list.innerHTML = state.columns.map((c,i)=>`
+    <div class="settings-item" data-cid="${c.id}">
+      <div class="col-color-bar col-accent-${i%5}" style="width:5px;height:22px;border-radius:3px;flex-shrink:0"></div>
+      <input value="${esc(c.title)}" placeholder="Column name" maxlength="40" />
+      <button class="settings-rm" data-cid="${c.id}" title="Remove">✕</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.settings-rm').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(state.columns.length<=1){ alert('A board needs at least one column.'); return; }
+      const cid = btn.dataset.cid;
+      const col = state.columns.find(c=>c.id===cid);
+      const cnt = state.notes.filter(n=>n.colId===cid).length;
+      if(cnt && !confirm(`Remove "${col.title}" and its ${cnt} note(s)?`)) return;
+      state.columns = state.columns.filter(c=>c.id!==cid);
+      state.notes   = state.notes.filter(n=>n.colId!==cid);
+      saveState(); render(); renderSettingsList();
+    });
+  });
+}
+
+function addColFromSettings() {
+  const id = 'c'+Date.now();
+  state.columns.push({ id, title:'New column' });
+  saveState(); render(); renderSettingsList();
+}
+
+function applySettings() {
+  document.querySelectorAll('#settingsList .settings-item').forEach(item=>{
+    const cid = item.dataset.cid;
+    const c   = state.columns.find(c=>c.id===cid);
+    if(c) c.title = item.querySelector('input').value.trim() || 'Untitled';
+  });
+  saveState(); render(); closeOverlay('settingsOverlay');
+}
+
+/* ── HELPERS ── */
+function quickAddColumn() {
+  const id = 'c'+Date.now();
+  state.columns.push({ id, title:'New column' });
+  saveState(); render();
+}
+
+function confirmClear() {
+  if(confirm('Delete all notes? This cannot be undone.')){ state.notes=[]; saveState(); render(); }
+}
+
+function buildColorRow() {
+  const row = document.getElementById('colorRow');
+  row.innerHTML = COLORS.map(c=>`
+    <div class="swatch ${c.id===selectedColor?'active':''}"
+         style="background:${c.bg}"
+         title="${c.label}"
+         data-cid="${c.id}"></div>
+  `).join('');
+  row.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click',()=>{
+      selectedColor=sw.dataset.cid;
+      row.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('active',s.dataset.cid===selectedColor));
+    });
+  });
+}
+
+function populateColumnSelect(selectId) {
+  const sel = document.getElementById('noteColumn');
+  sel.innerHTML = state.columns.map(c=>
+    `<option value="${c.id}" ${c.id===selectId?'selected':''}>${esc(c.title)}</option>`
+  ).join('');
+}
+
+function openOverlay(id)  { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+function overlayClick(e,id){ if(e.target===document.getElementById(id)) closeOverlay(id); }
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    closeOverlay('noteOverlay');
+    closeOverlay('settingsOverlay');
+  }
+  if(e.key==='Enter' && (e.ctrlKey||e.metaKey) && document.getElementById('noteOverlay').classList.contains('open')){
+    submitNote();
+  }
+});
+
+document.getElementById('boardTitle').addEventListener('change', e=>{
+  document.title = e.target.value || 'Sticky Note Board';
+});
+
+/* ── INIT ── */
+render();
+</script>
+</body>
+</html>
