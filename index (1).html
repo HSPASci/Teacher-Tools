@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classroom Toolkit — Interactive Teacher Tools</title>
+<meta name="description" content="Free interactive tools for teachers — polls, group randomisers, sticky note boards and more. Embed directly into Canvas.">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600&family=Outfit:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#1c1510;
+  --cream:#f7f3ed;
+  --cream2:#f0ebe3;
+  --border:#e2d8cc;
+  --muted:#7a6a58;
+  --white:#ffffff;
+  --radius:14px;
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── HERO ── */
+.hero{
+  background:var(--ink);
+  color:var(--white);
+  padding:3.5rem 2rem 3rem;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 10% 50%, rgba(180,120,60,.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 20%, rgba(100,60,180,.12) 0%, transparent 55%);
+  pointer-events:none;
+}
+.hero-inner{max-width:860px;margin:0 auto;position:relative}
+.hero-eyebrow{
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.4);
+  margin-bottom:1rem;
+  display:flex;align-items:center;gap:8px;
+}
+.hero-eyebrow::before{content:'';width:28px;height:1.5px;background:rgba(255,255,255,.25)}
+.hero h1{
+  font-family:'Lora',serif;
+  font-size:clamp(2rem,5vw,3.2rem);
+  font-weight:700;
+  line-height:1.15;
+  color:#fff;
+  margin-bottom:1rem;
+  letter-spacing:-.02em;
+}
+.hero h1 em{font-style:italic;color:rgba(255,220,140,.9)}
+.hero-sub{
+  font-size:16px;
+  color:rgba(255,255,255,.55);
+  line-height:1.65;
+  max-width:520px;
+  margin-bottom:2rem;
+}
+.hero-stats{
+  display:flex;gap:2rem;flex-wrap:wrap;
+}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat-num{
+  font-family:'Outfit',sans-serif;
+  font-size:24px;font-weight:800;color:#fff;
+  line-height:1;
+}
+.stat-lbl{font-size:12px;color:rgba(255,255,255,.4);font-weight:500}
+
+/* ── MAIN CONTENT ── */
+.main{max-width:860px;margin:0 auto;padding:3rem 2rem 4rem}
+
+/* Section headers */
+.section-header{display:flex;align-items:baseline;gap:12px;margin-bottom:1.5rem}
+.section-title{
+  font-family:'Outfit',sans-serif;
+  font-size:22px;font-weight:800;color:var(--ink);
+}
+.section-count{
+  font-size:12px;font-weight:600;
+  background:rgba(0,0,0,.07);
+  padding:2px 10px;border-radius:20px;
+  color:var(--muted);
+}
+.section-rule{flex:1;height:1.5px;background:var(--border)}
+
+/* ── TOOL CARDS ── */
+.tools-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:14px;
+  margin-bottom:3rem;
+}
+
+.tool-card{
+  background:var(--white);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  transition:transform .18s,box-shadow .18s,border-color .18s;
+  text-decoration:none;
+  color:inherit;
+}
+.tool-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 28px rgba(0,0,0,.1);
+  border-color:rgba(0,0,0,.15);
+}
+
+.tool-card-accent{height:5px;width:100%;flex-shrink:0}
+
+.tool-card-body{padding:1.25rem 1.25rem .85rem;flex:1;display:flex;flex-direction:column;gap:8px}
+
+.tool-icon{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;margin-bottom:2px;
+}
+
+.tool-title{
+  font-family:'Outfit',sans-serif;
+  font-size:17px;font-weight:800;
+  color:var(--ink);line-height:1.2;
+}
+
+.tool-desc{
+  font-size:13px;color:var(--muted);
+  line-height:1.6;flex:1;
+}
+
+.tool-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.tag{
+  font-size:10px;font-weight:600;
+  padding:2px 8px;border-radius:20px;
+  background:var(--cream2);color:var(--muted);
+  letter-spacing:.02em;
+}
+
+.tool-card-footer{
+  padding:.85rem 1.25rem 1.1rem;
+  border-top:1.5px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+}
+
+.launch-btn{
+  background:var(--ink);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:7px 16px;
+  font-size:13px;font-weight:600;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;align-items:center;gap:5px;
+  transition:background .15s;
+}
+.launch-btn:hover{background:#3a2e26}
+
+.embed-btn{
+  background:none;
+  border:1.5px solid var(--border);
+  border-radius:8px;
+  padding:6px 12px;
+  font-size:12px;font-weight:500;
+  font-family:'DM Sans',sans-serif;
+  cursor:pointer;
+  color:var(--muted);
+  transition:all .15s;
+  position:relative;
+  white-space:nowrap;
+}
+.embed-btn:hover{border-color:#888;color:var(--ink)}
+.copied-tip{
+  position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:#1c1510;color:#fff;font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:6px;white-space:nowrap;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.copied-tip.show{opacity:1}
+
+/* ── COMING SOON ── */
+.coming-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  gap:10px;
+  margin-bottom:3rem;
+}
+
+.soon-card{
+  background:var(--white);
+  border:1.5px dashed var(--border);
+  border-radius:var(--radius);
+  padding:1rem 1.1rem;
+  display:flex;align-items:flex-start;gap:10px;
+  opacity:.7;
+}
+.soon-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.soon-body{}
+.soon-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.soon-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.soon-pill{
+  display:inline-block;margin-top:5px;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:20px;
+  background:var(--cream2);color:var(--muted);
+  letter-spacing:.04em;text-transform:uppercase;
+}
+
+/* ── EMBED GUIDE ── */
+.embed-guide{
+  background:var(--ink);
+  color:rgba(255,255,255,.85);
+  border-radius:var(--radius);
+  padding:1.75rem 1.75rem 1.75rem;
+  margin-bottom:3rem;
+}
+.embed-guide h3{
+  font-family:'Outfit',sans-serif;
+  font-size:18px;font-weight:800;color:#fff;
+  margin-bottom:.4rem;
+}
+.embed-guide p{font-size:13px;line-height:1.7;margin-bottom:1rem;color:rgba(255,255,255,.6)}
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step-num{
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(255,255,255,.12);
+  color:#fff;font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+  font-family:'Outfit',sans-serif;
+}
+.step-txt{font-size:13px;color:rgba(255,255,255,.7);line-height:1.6}
+.step-txt strong{color:#fff;font-weight:600}
+.code-block{
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;
+  padding:10px 14px;
+  font-family:monospace;
+  font-size:12px;
+  color:rgba(255,255,255,.75);
+  margin-top:6px;
+  word-break:break-all;
+  line-height:1.6;
+  cursor:pointer;
+  transition:background .15s;
+  position:relative;
+}
+.code-block:hover{background:rgba(255,255,255,.12)}
+.code-block::after{
+  content:'click to copy';
+  position:absolute;top:8px;right:10px;
+  font-size:10px;color:rgba(255,255,255,.3);
+  font-family:'DM Sans',sans-serif;
+}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1.5px solid var(--border);
+  background:var(--cream2);
+  padding:1.5rem 2rem;
+  text-align:center;
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.8;
+}
+footer strong{color:var(--ink);font-weight:600}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .hero{padding:2.5rem 1.25rem 2rem}
+  .main{padding:2rem 1.25rem 3rem}
+  .hero-stats{gap:1.5rem}
+  .stat-num{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Classroom Toolkit</div>
+    <h1>Interactive tools for<br><em>every lesson</em></h1>
+    <p class="hero-sub">Free, self-contained HTML tools designed for teachers. Open any tool in your browser, embed it in Canvas, or project it on your board — no accounts, no installs, no fuss.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" id="toolCount">5</span><span class="stat-lbl">tools available</span></div>
+      <div class="stat"><span class="stat-num">0</span><span class="stat-lbl">accounts needed</span></div>
+      <div class="stat"><span class="stat-num">∞</span><span class="stat-lbl">classes, reuses</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- Available tools -->
+  <div class="section-header">
+    <h2 class="section-title">Available tools</h2>
+    <span class="section-count" id="availCount">5 ready</span>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="tools-grid">
+
+    <!-- Sticky Note Board -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#c09a6e"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#f5ede0">📌</div>
+        <div class="tool-title">Sticky Note Board</div>
+        <div class="tool-desc">A virtual corkboard where students add colour-coded sticky notes to customisable columns. Perfect for KWL charts, brainstorming, and gallery walks.</div>
+        <div class="tool-tags">
+          <span class="tag">Collaboration</span>
+          <span class="tag">KWL</span>
+          <span class="tag">Brainstorm</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./sticky-note-board.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('sticky-note-board.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Poll & Quiz -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#e74c3c"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#fdecea">📊</div>
+        <div class="tool-title">Live Poll & Quiz</div>
+        <div class="tool-desc">Students join live from their own devices using a session code or QR scan. Results update on the teacher's board in real time. Includes a countdown timer and correct-answer reveal. No accounts needed — uses two files: <strong>live-poll-quiz.html</strong> (teacher) and <strong>student-poll.html</strong> (students, embed this one in Canvas).</div>
+        <div class="tool-tags">
+          <span class="tag">Assessment</span>
+          <span class="tag">Live results</span>
+          <span class="tag">Student devices</span>
+        </div>
+      </div>
+      <div class="tool-card-footer" style="flex-direction:column;align-items:stretch;gap:10px">
+        <div style="display:flex;gap:8px">
+          <a class="launch-btn" href="./live-poll-quiz.html" target="_blank" style="flex:1;justify-content:center">📊 Teacher view</a>
+          <a class="launch-btn" href="./student-poll.html" target="_blank" style="flex:1;justify-content:center;background:#2980b9">👩‍🎓 Student view</a>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="embed-btn" style="flex:1;text-align:center;overflow:visible" onclick="copyEmbed('student-poll.html',this,600)" title="Copy Canvas embed code for the student joining page">
+            &lt;/&gt; Embed student page in Canvas
+            <span class="copied-tip">Copied!</span>
+          </button>
+          <button class="embed-btn" style="flex:1;text-align:center;overflow:visible" onclick="copyEmbed('live-poll-quiz.html',this,800)" title="Copy Canvas embed code for the teacher view">
+            &lt;/&gt; Embed teacher view
+            <span class="copied-tip">Copied!</span>
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.5;padding:0 2px">
+          💡 <strong>Embed the student page</strong> in your Canvas course so students can join on their devices. Open the teacher view on your own laptop to host and project.
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Randomiser -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#2980b9"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#eaf4fb">🎲</div>
+        <div class="tool-title">Group Randomiser</div>
+        <div class="tool-desc">Paste your class list and split students into random groups in seconds. Choose group size or number of groups, pick a naming style, save lists for reuse, and reshuffle with one click.</div>
+        <div class="tool-tags">
+          <span class="tag">Organisation</span>
+          <span class="tag">Groups</span>
+          <span class="tag">Class lists</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./group-randomiser.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('group-randomiser.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Exit Ticket -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#27ae60"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#e9f7ef">🎟️</div>
+        <div class="tool-title">Exit Ticket</div>
+        <div class="tool-desc">Project a quick end-of-lesson check-in — traffic light, emoji scale, star rating, thumbs, or custom options. Tap responses live as students answer, see instant results with an auto-generated class insight, and save sessions to track trends over time.</div>
+        <div class="tool-tags">
+          <span class="tag">Assessment</span>
+          <span class="tag">Check-in</span>
+          <span class="tag">Reflection</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./exit-ticket.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('exit-ticket.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Seating Plan Builder -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#8e44ad"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#f5eefb">🪑</div>
+        <div class="tool-title">Seating Plan Builder</div>
+        <div class="tool-desc">Build and save classroom seating plans on a configurable grid. Click students from your list to place them, drag between desks to swap, add notes per student, random-fill in one click, and print a clean chart.</div>
+        <div class="tool-tags">
+          <span class="tag">Organisation</span>
+          <span class="tag">Classroom</span>
+          <span class="tag">Printable</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./seating-plan-builder.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('seating-plan-builder.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Coming soon -->
+  <div class="section-header">
+    <h2 class="section-title">Coming soon</h2>
+    <div class="section-rule"></div>
+  </div>
+
+  <div class="coming-grid">
+    <div class="soon-card">
+      <span class="soon-icon">⏱</span>
+      <div class="soon-body">
+        <div class="soon-title">Timer & Countdown</div>
+        <div class="soon-desc">Visible countdown for timed tasks and exam conditions.</div>
+        <span class="soon-pill">In progress</span>
+      </div>
+    </div>
+    <div class="soon-card">
+      <span class="soon-icon">🎯</span>
+      <div class="soon-body">
+        <div class="soon-title">Random Student Picker</div>
+        <div class="soon-desc">Spin wheel or card flip to select a student at random.</div>
+        <span class="soon-pill">In progress</span>
+      </div>
+    </div>
+    <div class="soon-card">
+      <span class="soon-icon">🔤</span>
+      <div class="soon-body">
+        <div class="soon-title">Vocabulary Flashcards</div>
+        <div class="soon-desc">Teacher-built term/definition decks students flip through.</div>
+        <span class="soon-pill">Planned</span>
+      </div>
+    </div>
+    <div class="soon-card">
+      <span class="soon-icon">📋</span>
+      <div class="soon-body">
+        <div class="soon-title">Lesson Agenda Timer</div>
+        <div class="soon-desc">Named lesson phases that auto-count down one by one.</div>
+        <span class="soon-pill">Planned</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embed guide -->
+  <div class="embed-guide">
+    <h3>📎 Embedding a tool in Canvas</h3>
+    <p>Each tool can be embedded directly into any Canvas page as a live, interactive iframe. Here's how:</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-txt">In Canvas, open a page for editing and click the <strong>&lt;/&gt; HTML editor</strong> button (bottom of the toolbar).</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-txt">Click the <strong>&lt;/&gt; Embed</strong> button on any tool above — it copies the ready-made iframe code to your clipboard.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-txt">Paste the code into the Canvas HTML editor and save. The tool will appear as a fully interactive panel on your Canvas page.
+          <div class="code-block" onclick="copyCode(this)">&lt;iframe src="https://YOUR-USERNAME.github.io/YOUR-REPO/sticky-note-board.html" width="100%" height="700" style="border:none;border-radius:10px;"&gt;&lt;/iframe&gt;</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-txt">Replace <strong>YOUR-USERNAME</strong> and <strong>YOUR-REPO</strong> with your GitHub details, and swap the filename for whichever tool you're embedding.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>Classroom Toolkit</strong> — built with ♥ for teachers &nbsp;·&nbsp;
+  All tools are free, open source, and require no accounts or tracking &nbsp;·&nbsp;
+  Add new tools by uploading HTML files to this repository
+</footer>
+
+<script>
+function getBaseUrl(){
+  const url=window.location.href;
+  return url.substring(0,url.lastIndexOf('/')+1);
+}
+
+function copyEmbed(filename,btn,height){
+  const base=getBaseUrl();
+  const h=height||720;
+  const code=`<iframe src="${base}${filename}" width="100%" height="${h}" style="border:none;border-radius:10px;"></iframe>`;
+  navigator.clipboard.writeText(code).then(()=>{
+    const tip=btn.querySelector('.copied-tip');
+    tip.classList.add('show');
+    setTimeout(()=>tip.classList.remove('show'),2000);
+  }).catch(()=>alert('Copy this embed code:\n\n'+code));
+}
+
+function copyCode(el){
+  const txt=el.textContent.replace('click to copy','').trim();
+  navigator.clipboard.writeText(txt).then(()=>{
+    const orig=el.style.background;
+    el.style.background='rgba(255,255,255,.18)';
+    setTimeout(()=>el.style.background=orig,600);
+  });
+}
+</script>
+</body>
+</html>
