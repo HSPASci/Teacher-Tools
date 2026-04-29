@@ -3,149 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Poll & Quiz</title>
+<title>Live Poll & Quiz — Teacher</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --s-bg:#f0ede8;--s-card:#fff;--s-border:#e0d8d0;--s-text:#1a1410;--s-muted:#7a6e64;
-  --p-bg:#0f1923;--p-text:#fff;--p-muted:rgba(255,255,255,.5);--p-surface:rgba(255,255,255,.06);
+  --s-bg:#f0ede8;--s-card:#fff;--s-bd:#e0d8d0;--s-text:#1a1410;--s-muted:#7a6e64;
+  --p-bg:#0f1923;--green:#2ecc71;
   --oc0:#e74c3c;--oc1:#2980b9;--oc2:#27ae60;--oc3:#e67e22;--oc4:#8e44ad;--oc5:#16a085;
-  --correct:#2ecc71;
 }
-
 body{font-family:'DM Sans',sans-serif;background:var(--s-bg);color:var(--s-text);min-height:100vh}
+.screen{display:none;flex-direction:column;min-height:100vh}.screen.on{display:flex}
 
-.screen{display:none;flex-direction:column;min-height:100vh}
-.screen.active{display:flex}
-
-/* ─── SETUP HEADER ─── */
-.setup-header{background:#1a1410;color:#fff;padding:0 1.25rem;height:56px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-shrink:0}
-.setup-title{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:#fff;font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;padding:2px 6px;outline:none;transition:border-color .15s}
-.setup-title:focus{border-bottom-color:rgba(255,255,255,.35)}
+/* SETUP */
+.hdr{background:#1a1410;color:#fff;padding:0 1.25rem;height:54px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-shrink:0}
+.hdr-title{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:#fff;font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;padding:2px 6px;outline:none;transition:border-color .15s}
+.hdr-title:focus{border-bottom-color:rgba(255,255,255,.35)}
 .tbtn{background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.18);color:#fff;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;white-space:nowrap;flex-shrink:0}
 .tbtn:hover{background:rgba(255,255,255,.2)}
-.tbtn.go{background:#e74c3c;border-color:transparent;color:#fff}
-.tbtn.go:hover{background:#c0392b}
+.tbtn.go{background:#27ae60;border-color:transparent}.tbtn.go:hover{background:#219a52}
 .tbtn.go:disabled{background:#555;cursor:not-allowed}
+.tbtn.solo{background:#e67e22;border-color:transparent}.tbtn.solo:hover{background:#d35400}
+.tbtn.solo:disabled{background:#555;cursor:not-allowed}
 
-/* ─── SETUP BODY ─── */
 .setup-body{max-width:760px;margin:0 auto;padding:1.5rem;width:100%;flex:1}
-.setup-hint{font-size:13px;color:var(--s-muted);margin-bottom:1rem}
+.callout{background:#fff;border:1.5px solid var(--s-bd);border-radius:10px;padding:.85rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--s-muted);line-height:1.6}
+.callout strong{color:var(--s-text)}
 .tpl-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center}
 .tpl-lbl{font-size:12px;color:#aaa}
-.tpl-btn{background:#fff;border:1.5px solid var(--s-border);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--s-muted);cursor:pointer;transition:all .15s}
+.tpl-btn{background:#fff;border:1.5px solid var(--s-bd);border-radius:20px;padding:5px 13px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--s-muted);cursor:pointer;transition:all .15s}
 .tpl-btn:hover{border-color:#888;color:#444;background:#f5f2ee}
-
-/* ─── QUESTION CARD ─── */
-.q-card{background:var(--s-card);border:1.5px solid var(--s-border);border-radius:14px;padding:1.25rem;margin-bottom:12px}
-.q-card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+.q-card{background:#fff;border:1.5px solid var(--s-bd);border-radius:14px;padding:1.25rem;margin-bottom:12px}
+.q-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
 .q-num{width:28px;height:28px;border-radius:50%;background:#1a1410;color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Outfit',sans-serif;margin-top:6px}
-.q-textarea{flex:1;border:1.5px solid var(--s-border);border-radius:9px;padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--s-text);outline:none;resize:none;line-height:1.4;transition:border-color .15s}
-.q-textarea:focus{border-color:#1a1410}
-.q-remove{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:4px 5px;border-radius:4px;transition:color .15s;flex-shrink:0;margin-top:2px}
-.q-remove:hover{color:#e74c3c}
+.q-ta{flex:1;border:1.5px solid var(--s-bd);border-radius:9px;padding:8px 11px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--s-text);outline:none;resize:none;line-height:1.4;transition:border-color .15s}
+.q-ta:focus{border-color:#1a1410}
+.q-rm{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:4px 5px;border-radius:4px;transition:color .15s;flex-shrink:0;margin-top:2px}
+.q-rm:hover{color:#e74c3c}
 .opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .opt-row{display:flex;align-items:center;gap:7px}
 .opt-dot{width:26px;height:26px;border-radius:6px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-family:'Outfit',sans-serif}
-.opt-inp{flex:1;border:1.5px solid var(--s-border);border-radius:7px;padding:6px 9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--s-text);outline:none;transition:border-color .15s}
+.opt-inp{flex:1;border:1.5px solid var(--s-bd);border-radius:7px;padding:6px 9px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--s-text);outline:none;transition:border-color .15s}
 .opt-inp:focus{border-color:#888}
-.opt-tick{background:none;border:1.5px solid var(--s-border);border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--s-muted);transition:all .15s;flex-shrink:0}
-.opt-tick:hover{border-color:var(--correct);color:var(--correct)}
-.opt-tick.on{background:var(--correct);border-color:var(--correct);color:#fff}
-.q-footer{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--s-muted);flex-wrap:wrap}
-.q-footer-right{margin-left:auto;display:flex;align-items:center;gap:6px}
-.small-btn{background:none;border:1px dashed var(--s-border);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--s-muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
-.small-btn:hover{border-color:#888;color:#444}
-.timer-inp{width:54px;border:1.5px solid var(--s-border);border-radius:6px;padding:4px 7px;font-size:13px;font-family:'DM Sans',sans-serif;text-align:center;outline:none;color:var(--s-text)}
-.add-q-btn{width:100%;background:var(--s-card);border:2px dashed var(--s-border);border-radius:14px;padding:14px;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--s-muted);cursor:pointer;transition:all .15s;margin-top:4px}
+.opt-tick{background:none;border:1.5px solid var(--s-bd);border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--s-muted);transition:all .15s;flex-shrink:0}
+.opt-tick:hover{border-color:var(--green);color:var(--green)}
+.opt-tick.on{background:var(--green);border-color:var(--green);color:#fff}
+.q-foot{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--s-muted);flex-wrap:wrap}
+.q-foot-r{margin-left:auto;display:flex;align-items:center;gap:6px}
+.sml{background:none;border:1px dashed var(--s-bd);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--s-muted);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.sml:hover{border-color:#888;color:#444}
+.timer-inp{width:54px;border:1.5px solid var(--s-bd);border-radius:6px;padding:4px 7px;font-size:13px;font-family:'DM Sans',sans-serif;text-align:center;outline:none;color:var(--s-text)}
+.add-q-btn{width:100%;background:#fff;border:2px dashed var(--s-bd);border-radius:14px;padding:14px;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;color:var(--s-muted);cursor:pointer;transition:all .15s;margin-top:4px}
 .add-q-btn:hover{background:#ece8e2;border-color:#bbb;color:#444}
 .empty-q{text-align:center;padding:2.5rem 1rem;color:#aaa;font-size:14px}
 
-/* ─── PRESENT SCREEN ─── */
-#presentScreen{background:var(--p-bg);color:var(--p-text)}
+/* SESSION */
+#sessionScreen{background:#0f1923;color:#fff}
+.sess-inner{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;padding:2rem;text-align:center}
+.sess-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35)}
+.sess-url-txt{font-size:14px;color:rgba(255,255,255,.6);word-break:break-all;max-width:500px;line-height:1.6}
+.sess-grid{display:flex;gap:2rem;align-items:center;flex-wrap:wrap;justify-content:center}
+.sess-qr{background:#fff;border-radius:14px;padding:12px}
+.sess-qr img{display:block;border-radius:4px}
+.sess-code-box{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:18px;padding:1.5rem 2.5rem}
+.sess-code{font-family:'Outfit',sans-serif;font-size:clamp(40px,7vw,68px);font-weight:900;color:#fff;letter-spacing:.18em;line-height:1}
+.sess-code-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:6px;text-transform:uppercase;letter-spacing:.08em}
+.studs-row{display:flex;align-items:center;gap:8px;font-size:15px;font-family:'Outfit',sans-serif;font-weight:700}
+.pulse{width:9px;height:9px;border-radius:50%;background:#27ae60;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.studs-n{color:#fff;min-width:30px}
+.studs-lbl{color:rgba(255,255,255,.45)}
+.sess-info{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.85rem 1.1rem;max-width:380px;font-size:13px;color:rgba(255,255,255,.5);line-height:1.7}
+.sess-info strong{color:rgba(255,255,255,.8)}
+.sess-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.sess-btn{border:none;border-radius:11px;padding:13px 26px;font-size:15px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .15s}
+.sess-go{background:#27ae60;color:#fff}.sess-go:hover{background:#219a52}
+.sess-back{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.18)}.sess-back:hover{background:rgba(255,255,255,.18)}
 
+/* PRESENT */
+#presentScreen{background:var(--p-bg);color:#fff}
 .p-topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 1.25rem;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
-.p-quiz-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--p-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
-.p-center{display:flex;align-items:center;gap:12px}
+.p-name{font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:rgba(255,255,255,.5);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-mid{display:flex;align-items:center;gap:12px}
+.p-live{font-size:12px;font-weight:600;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:5px;font-family:'Outfit',sans-serif}
+.p-live-dot{width:7px;height:7px;border-radius:50%;background:#27ae60}
 .q-prog{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;color:rgba(255,255,255,.6)}
-.p-edit-btn{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;color:rgba(255,255,255,.65);cursor:pointer;transition:background .15s;flex-shrink:0}
-.p-edit-btn:hover{background:rgba(255,255,255,.16)}
-
-/* Timer ring */
+.p-back{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;color:rgba(255,255,255,.65);cursor:pointer;transition:background .15s;flex-shrink:0}
+.p-back:hover{background:rgba(255,255,255,.16)}
 .t-ring{width:50px;height:50px;position:relative;flex-shrink:0}
 .t-ring circle{fill:none;stroke-width:4}
 .t-track{stroke:rgba(255,255,255,.1)}
 .t-fill{stroke:#f39c12;stroke-linecap:round;transform-origin:25px 25px;transform:rotate(-90deg);transition:stroke-dashoffset 1s linear,stroke .3s}
-.t-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:#fff}
-
+.t-lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:#fff}
 .p-body{flex:1;display:flex;flex-direction:column;padding:1.25rem 1.5rem;max-width:920px;margin:0 auto;width:100%}
-
-/* Status pill */
-.status{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;align-self:center;margin-bottom:.75rem}
-.status .dot{width:7px;height:7px;border-radius:50%}
-.s-wait{background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)}
-.s-wait .dot{background:rgba(255,255,255,.3)}
-.s-open{background:rgba(46,204,113,.14);color:#2ecc71}
-.s-open .dot{background:#2ecc71;animation:blink 1s infinite}
-.s-done{background:rgba(231,76,60,.14);color:#e74c3c}
-.s-done .dot{background:#e74c3c}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;align-self:center;margin-bottom:.75rem}
+.status-pill .dot{width:7px;height:7px;border-radius:50%}
+.sw{background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)}.sw .dot{background:rgba(255,255,255,.3)}
+.so{background:rgba(46,204,113,.14);color:#2ecc71}.so .dot{background:#2ecc71;animation:blink 1s infinite}
+.sc{background:rgba(231,76,60,.14);color:#e74c3c}.sc .dot{background:#e74c3c}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-
-.q-text{font-family:'Outfit',sans-serif;font-size:clamp(20px,2.8vw,32px);font-weight:700;line-height:1.3;color:#fff;text-align:center;margin:.5rem 0 1.25rem;min-height:48px}
-
-/* Voting grid */
+.q-txt{font-family:'Outfit',sans-serif;font-size:clamp(20px,2.8vw,32px);font-weight:700;line-height:1.3;color:#fff;text-align:center;margin:.5rem 0 1.25rem}
 .vote-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:11px;margin-bottom:1.25rem}
-.vote-btn{border:none;border-radius:13px;padding:17px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#fff;text-align:left;transition:transform .1s,filter .15s;position:relative}
-.vote-btn:not(:disabled):hover{transform:scale(1.03);filter:brightness(1.1)}
-.vote-btn:not(:disabled):active{transform:scale(.97)}
-.vote-btn:disabled{cursor:default;opacity:.85}
-.v-lbl{width:30px;height:30px;border-radius:7px;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;flex-shrink:0}
-.v-txt{flex:1;line-height:1.3}
-.v-badge{background:rgba(0,0,0,.25);border-radius:12px;padding:2px 10px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;flex-shrink:0}
-
-/* Results */
-.results{display:flex;flex-direction:column;gap:9px;margin-bottom:1.25rem}
+.vbtn{border:none;border-radius:13px;padding:17px 14px;cursor:pointer;display:flex;align-items:center;gap:11px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;color:#fff;text-align:left;transition:transform .1s,filter .15s;position:relative}
+.vbtn:not(:disabled):hover{transform:scale(1.03);filter:brightness(1.1)}
+.vbtn:active:not(:disabled){transform:scale(.97)}
+.vbtn:disabled{cursor:default;opacity:.85}
+.vbtn-lbl{width:30px;height:30px;border-radius:7px;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:14px;flex-shrink:0}
+.vbtn-txt{flex:1;line-height:1.3}
+.vbtn-cnt{background:rgba(0,0,0,.25);border-radius:12px;padding:2px 10px;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;flex-shrink:0}
+.p1{position:absolute;top:8px;right:12px;font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:rgba(255,255,255,.9);pointer-events:none;animation:floatUp .7s ease forwards}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-36px)}}
+.res-area{display:flex;flex-direction:column;gap:9px;margin-bottom:1.25rem}
 .r-row{display:flex;align-items:center;gap:9px}
 .r-dot{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
-.r-label{width:130px;font-size:13px;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
+.r-lbl{width:130px;font-size:13px;color:rgba(255,255,255,.7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0}
 .r-track{flex:1;height:40px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden}
 .r-bar{height:100%;border-radius:8px;width:0%;transition:width .75s cubic-bezier(.34,1.4,.64,1)}
-.r-bar.winner{box-shadow:0 0 14px rgba(46,204,113,.45)}
+.r-bar.win{box-shadow:0 0 14px rgba(46,204,113,.45)}
 .r-pct{font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;min-width:44px;text-align:right;color:#fff;flex-shrink:0}
 .r-tick{font-size:16px;opacity:0;transition:opacity .3s .5s;flex-shrink:0;width:22px}
 .r-tick.show{opacity:1}
-
-.votes-total{text-align:center;font-size:12px;color:rgba(255,255,255,.35);font-family:'Outfit',sans-serif;margin-bottom:.5rem}
-
-/* Controls */
+.vtotal{text-align:center;font-size:12px;color:rgba(255,255,255,.35);font-family:'Outfit',sans-serif;margin-bottom:.5rem}
 .p-ctrl{display:flex;gap:9px;align-items:center;justify-content:center;padding:.75rem 0 1.25rem;flex-wrap:wrap;flex-shrink:0}
 .cb{border:none;border-radius:10px;padding:11px 22px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
 .cb:disabled{opacity:.3;cursor:not-allowed}
-.cb-open{background:#2ecc71;color:#0c1f14}
-.cb-open:hover:not(:disabled){background:#27ae60}
-.cb-close{background:#e74c3c;color:#fff}
-.cb-close:hover:not(:disabled){background:#c0392b}
-.cb-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.18)}
-.cb-ghost:hover:not(:disabled){background:rgba(255,255,255,.18)}
-.cb-reveal{background:#f39c12;color:#2d1a00}
-.cb-reveal:hover:not(:disabled){background:#e67e22}
-.cb-next{background:#fff;color:#1a1410}
-.cb-next:hover:not(:disabled){background:#f0ede8}
-.cb-summary{background:#8e44ad;color:#fff}
-.cb-summary:hover:not(:disabled){background:#7d3c98}
+.cb-open{background:#2ecc71;color:#0c1f14}.cb-open:hover:not(:disabled){background:#27ae60}
+.cb-close{background:#e74c3c;color:#fff}.cb-close:hover:not(:disabled){background:#c0392b}
+.cb-ghost{background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.18)}.cb-ghost:hover:not(:disabled){background:rgba(255,255,255,.18)}
+.cb-reveal{background:#f39c12;color:#2d1a00}.cb-reveal:hover:not(:disabled){background:#e67e22}
+.cb-next{background:#fff;color:#1a1410}.cb-next:hover:not(:disabled){background:#f0ede8}
+.cb-sum{background:#8e44ad;color:#fff}.cb-sum:hover:not(:disabled){background:#7d3c98}
+.solo-note{text-align:center;font-size:12px;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;padding-bottom:4px}
 
-/* ─── SUMMARY SCREEN ─── */
-#summaryScreen{background:var(--p-bg);color:var(--p-text)}
-.sum-head{text-align:center;padding:2rem 1.5rem 1rem}
-.sum-title{font-family:'Outfit',sans-serif;font-size:26px;font-weight:800;margin-bottom:4px}
+/* SUMMARY */
+#summaryScreen{background:var(--p-bg);color:#fff}
+.sum-hdr{text-align:center;padding:2rem 1.5rem 1rem}
+.sum-h1{font-family:'Outfit',sans-serif;font-size:26px;font-weight:800;margin-bottom:4px}
 .sum-sub{color:rgba(255,255,255,.4);font-size:13px}
 .sum-body{max-width:740px;margin:0 auto;padding:.75rem 1.5rem 2rem;width:100%;flex:1}
 .sum-q{background:rgba(255,255,255,.05);border-radius:12px;padding:1rem 1.25rem;margin-bottom:11px}
 .sum-qt{font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;margin-bottom:9px;color:#fff}
-.sum-opts{display:flex;flex-direction:column;gap:5px}
-.sum-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.sum-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:5px}
 .sum-track{flex:1;height:20px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
 .sum-bar{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.34,1.4,.64,1)}
 .sum-foot{display:flex;gap:9px;justify-content:center;padding:1rem 1.5rem 1.5rem;flex-shrink:0;flex-wrap:wrap}
@@ -153,16 +152,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--s-bg);color:var(--s-text)
 </head>
 <body>
 
-<!-- ═══════════ SETUP SCREEN ═══════════ -->
-<section id="setupScreen" class="screen active">
-  <div class="setup-header">
+<!-- ══ SETUP ══ -->
+<section id="setupScreen" class="screen on">
+  <div class="hdr">
     <span style="font-size:19px;flex-shrink:0">📊</span>
-    <input class="setup-title" id="quizTitle" value="Class Quiz" maxlength="60" placeholder="Quiz / Poll title" />
-    <button class="tbtn" onclick="window.open('','_blank') && false" style="display:none"></button>
-    <button class="tbtn go" id="btnPresent" onclick="startPresenting()">▶ Present</button>
+    <input class="hdr-title" id="quizTitle" value="Class Quiz" maxlength="60" placeholder="Quiz / Poll title" />
+    <button class="tbtn solo" id="btnSolo" onclick="startSolo()" disabled>▶ Solo (manual tally)</button>
+    <button class="tbtn go" id="btnSession" onclick="startSession()" disabled>📡 Start live session</button>
   </div>
   <div class="setup-body">
-    <p class="setup-hint">Add questions below. Mark the correct answer with ✓ (optional — leave blank for polls). Click ▶ Present when ready to project.</p>
+    <div class="callout">
+      <strong>📡 Live session</strong> — students join from their own devices in real time. Click <em>Start live session</em>, project the join code, and students open <strong>student-poll.html</strong> in Canvas.
+      &nbsp;|&nbsp; <strong>▶ Solo</strong> — tap the options yourself to tally a show-of-hands.
+    </div>
     <div class="tpl-bar">
       <span class="tpl-lbl">Quick add:</span>
       <button class="tpl-btn" onclick="addTpl('tf')">True / False</button>
@@ -176,46 +178,84 @@ body{font-family:'DM Sans',sans-serif;background:var(--s-bg);color:var(--s-text)
   </div>
 </section>
 
-<!-- ═══════════ PRESENT SCREEN ═══════════ -->
+<!-- ══ SESSION ══ -->
+<section id="sessionScreen" class="screen">
+  <div class="hdr" style="background:#0a1119;border-bottom:1px solid rgba(255,255,255,.08)">
+    <span style="font-size:17px">📡</span>
+    <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;flex:1;color:#fff">Live session</span>
+    <button class="tbtn" onclick="endSession()">← Back</button>
+    <button class="tbtn go" onclick="beginPresenting()">▶ Start presenting</button>
+  </div>
+  <div class="sess-inner">
+    <div class="sess-eyebrow">Students go to</div>
+    <div class="sess-url-txt" id="sessUrl">connecting…</div>
+    <div class="sess-grid">
+      <div class="sess-qr"><img id="qrImg" src="" width="180" height="180" alt="QR loading…" /></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.6rem">
+        <div class="sess-eyebrow">or type this code</div>
+        <div class="sess-code-box">
+          <div class="sess-code" id="sessCode">------</div>
+          <div class="sess-code-sub">session code</div>
+        </div>
+      </div>
+    </div>
+    <div class="studs-row">
+      <div class="pulse"></div>
+      <span class="studs-n" id="studsN">0</span>
+      <span class="studs-lbl" id="studsLbl">students connected</span>
+    </div>
+    <div class="sess-info">
+      Students open <strong>student-poll.html</strong> on their device (via Canvas or the URL), enter the code, and wait.
+      Start presenting when ready — you control every step.
+    </div>
+    <div class="sess-btns">
+      <button class="sess-btn sess-back" onclick="endSession()">← Back to setup</button>
+      <button class="sess-btn sess-go" onclick="beginPresenting()">▶ Start presenting →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRESENT ══ -->
 <section id="presentScreen" class="screen">
   <div class="p-topbar">
-    <div class="p-quiz-name" id="pTitle">Class Quiz</div>
-    <div class="p-center">
+    <div class="p-name" id="pTitle">Class Quiz</div>
+    <div class="p-mid">
+      <div class="p-live" id="pLive" style="display:none"><span class="p-live-dot"></span><span id="pLiveN">0</span> live</div>
       <div class="t-ring" id="tRing" style="display:none">
         <svg width="50" height="50" viewBox="0 0 50 50">
           <circle class="t-track" cx="25" cy="25" r="21"/>
           <circle class="t-fill" id="tCircle" cx="25" cy="25" r="21" stroke-dasharray="131.9" stroke-dashoffset="0"/>
         </svg>
-        <div class="t-label" id="tLabel">30</div>
+        <div class="t-lbl" id="tLbl">30</div>
       </div>
       <div class="q-prog" id="qProg">Q 1 / 1</div>
     </div>
-    <button class="p-edit-btn" onclick="goSetup()">← Edit</button>
+    <button class="p-back" onclick="goSetup()">← Edit</button>
   </div>
-
   <div class="p-body">
-    <div class="status s-wait" id="statusPill">
-      <span class="dot"></span><span id="statusTxt">Waiting to start</span>
-    </div>
-    <p class="q-text" id="qTxt"></p>
+    <div class="status-pill sw" id="statusPill"><span class="dot"></span><span id="statusTxt">Waiting to start</span></div>
+    <p class="q-txt" id="qTxt"></p>
     <div class="vote-grid" id="voteGrid"></div>
-    <div class="results" id="resultsArea" style="display:none"></div>
-    <div class="votes-total" id="vtotal"></div>
+    <div class="res-area" id="resArea" style="display:none"></div>
+    <div class="vtotal" id="vtotal"></div>
   </div>
-
+  <div class="solo-note" id="soloNote" style="display:none">Solo mode — tap the options above to tally votes manually</div>
   <div class="p-ctrl" id="pCtrl"></div>
 </section>
 
-<!-- ═══════════ SUMMARY SCREEN ═══════════ -->
+<!-- ══ SUMMARY ══ -->
 <section id="summaryScreen" class="screen">
-  <div class="sum-head">
-    <div class="sum-title">📊 Results summary</div>
-    <div class="sum-sub" id="sumSub"></div>
+  <div class="hdr" style="background:#0a1119;border-bottom:1px solid rgba(255,255,255,.08)">
+    <span style="font-size:17px">📊</span>
+    <span style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;flex:1;color:#fff">Results summary</span>
+    <button class="tbtn" onclick="goSetup()">← Edit quiz</button>
+    <button class="tbtn go" onclick="startSession()">📡 New session</button>
   </div>
+  <div class="sum-hdr"><div class="sum-h1">📊 Results summary</div><div class="sum-sub" id="sumSub"></div></div>
   <div class="sum-body" id="sumBody"></div>
   <div class="sum-foot">
     <button class="cb cb-ghost" onclick="goSetup()">← Edit quiz</button>
-    <button class="cb cb-next" onclick="startPresenting()">▶ Present again</button>
+    <button class="cb cb-next" onclick="startSession()">📡 New live session</button>
   </div>
 </section>
 
@@ -223,292 +263,282 @@ body{font-family:'DM Sans',sans-serif;background:var(--s-bg);color:var(--s-text)
 const OC=['#e74c3c','#2980b9','#27ae60','#e67e22','#8e44ad','#16a085'];
 const OL=['A','B','C','D','E','F'];
 
-let qs=[];
-let cur=0;
-let vState='wait'; // wait | open | closed
-let tInt=null;
-let tLeft=0;
-let revealed=false;
+let qs=[], cur=0, vState='wait', tLeft=0, tInt=null, revealed=false, liveMode=false;
+let peer=null, conns=[], studentCount=0;
+let voted=new Map(); // qIndex -> Set<sid>
 
-/* ── SETUP ── */
-function addQ(data){
-  qs.push(data||{id:'q'+Date.now()+Math.random().toString(36).slice(2),text:'',opts:['','','',''],correct:-1,timer:30,votes:[]});
+/* ── BUILD ── */
+function addQ(d){
+  qs.push(d||{id:'q'+Date.now()+rnd(),text:'',opts:['','','',''],correct:-1,timer:30,votes:[]});
   renderQList();
 }
-
 function addTpl(t){
   const T={
-    tf:  {text:'',opts:['True','False'],correct:-1,timer:20},
-    yn:  {text:'',opts:['Yes','No','Maybe'],correct:-1,timer:20},
-    mc4: {text:'',opts:['','','',''],correct:-1,timer:30},
+    tf:{text:'',opts:['True','False'],correct:-1,timer:20},
+    yn:{text:'',opts:['Yes','No','Maybe'],correct:-1,timer:20},
+    mc4:{text:'',opts:['','','',''],correct:-1,timer:30},
     agree:{text:'',opts:['Strongly agree','Agree','Neutral','Disagree','Strongly disagree'],correct:-1,timer:30},
     rate:{text:'',opts:['⭐ 1','⭐⭐ 2','⭐⭐⭐ 3','⭐⭐⭐⭐ 4','⭐⭐⭐⭐⭐ 5'],correct:-1,timer:20},
   };
-  addQ({id:'q'+Date.now()+Math.random().toString(36).slice(2),votes:[],...T[t]});
+  addQ({id:'q'+Date.now()+rnd(),votes:[],...T[t]});
 }
-
-function removeQ(id){ qs=qs.filter(q=>q.id!==id); renderQList(); }
-
-function toggleCorrect(id,oi){
-  const q=qs.find(q=>q.id===id);
-  if(q){q.correct=q.correct===oi?-1:oi; renderQList();}
-}
-
-function addOpt(id){
-  const q=qs.find(q=>q.id===id);
-  if(q&&q.opts.length<6){q.opts.push('');renderQList();}
-}
-function rmOpt(id){
-  const q=qs.find(q=>q.id===id);
-  if(q&&q.opts.length>2){
-    q.opts.pop();
-    if(q.correct>=q.opts.length)q.correct=-1;
-    renderQList();
-  }
-}
+function removeQ(id){qs=qs.filter(q=>q.id!==id);renderQList();}
+function toggleCorrect(id,oi){const q=qs.find(q=>q.id===id);if(q){q.correct=q.correct===oi?-1:oi;renderQList();}}
+function addOpt(id){const q=qs.find(q=>q.id===id);if(q&&q.opts.length<6){q.opts.push('');renderQList();}}
+function rmOpt(id){const q=qs.find(q=>q.id===id);if(q&&q.opts.length>2){q.opts.pop();if(q.correct>=q.opts.length)q.correct=-1;renderQList();}}
 
 function renderQList(){
-  const el=document.getElementById('qList');
-  document.getElementById('btnPresent').disabled=qs.length===0;
-  if(qs.length===0){el.innerHTML='<div class="empty-q">No questions yet — use the quick-add templates above or click ＋ Add below.</div>';return;}
+  const el=document.getElementById('qList'),ok=qs.length>0;
+  document.getElementById('btnSession').disabled=!ok;
+  document.getElementById('btnSolo').disabled=!ok;
+  if(!ok){el.innerHTML='<div class="empty-q">No questions yet — use the quick-add templates above or click ＋</div>';return;}
   el.innerHTML=qs.map((q,qi)=>`
-    <div class="q-card" id="card${q.id}">
-      <div class="q-card-top">
+    <div class="q-card">
+      <div class="q-top">
         <div class="q-num">${qi+1}</div>
-        <textarea class="q-textarea" rows="2" placeholder="Question ${qi+1}…" data-id="${q.id}" data-f="text">${x(q.text)}</textarea>
-        <button class="q-remove" onclick="removeQ('${q.id}')" title="Remove">✕</button>
+        <textarea class="q-ta" rows="2" placeholder="Question ${qi+1}…" data-id="${q.id}" data-f="text">${x(q.text)}</textarea>
+        <button class="q-rm" onclick="removeQ('${q.id}')">✕</button>
       </div>
       <div class="opts-grid">
         ${q.opts.map((o,oi)=>`
           <div class="opt-row">
             <div class="opt-dot" style="background:${OC[oi%6]}">${OL[oi]}</div>
             <input class="opt-inp" value="${x(o)}" placeholder="Option ${OL[oi]}" data-id="${q.id}" data-oi="${oi}" />
-            <button class="opt-tick${q.correct===oi?' on':''}" onclick="toggleCorrect('${q.id}',${oi})" title="Mark correct">✓</button>
-          </div>
-        `).join('')}
+            <button class="opt-tick${q.correct===oi?' on':''}" onclick="toggleCorrect('${q.id}',${oi})">✓</button>
+          </div>`).join('')}
       </div>
-      <div class="q-footer">
-        ${q.opts.length<6?`<button class="small-btn" onclick="addOpt('${q.id}')">＋ option</button>`:''}
-        ${q.opts.length>2?`<button class="small-btn" onclick="rmOpt('${q.id}')">− option</button>`:''}
-        <div class="q-footer-right">
-          <span>Timer:</span>
-          <input class="timer-inp" type="number" min="0" max="300" value="${q.timer}" data-id="${q.id}" data-f="timer" />
-          <span>sec (0 = off)</span>
-        </div>
+      <div class="q-foot">
+        ${q.opts.length<6?`<button class="sml" onclick="addOpt('${q.id}')">＋ option</button>`:''}
+        ${q.opts.length>2?`<button class="sml" onclick="rmOpt('${q.id}')">− option</button>`:''}
+        <div class="q-foot-r"><span>Timer:</span><input class="timer-inp" type="number" min="0" max="300" value="${q.timer}" data-id="${q.id}" data-f="timer" /><span>sec (0=off)</span></div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
+  el.querySelectorAll('[data-f="text"]').forEach(e=>e.addEventListener('input',ev=>{const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.text=ev.target.value;}));
+  el.querySelectorAll('[data-f="timer"]').forEach(e=>e.addEventListener('change',ev=>{const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.timer=Math.max(0,parseInt(ev.target.value)||0);}));
+  el.querySelectorAll('.opt-inp').forEach(e=>e.addEventListener('input',ev=>{const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.opts[+ev.target.dataset.oi]=ev.target.value;}));
+}
 
-  el.querySelectorAll('[data-f="text"]').forEach(e=>e.addEventListener('input',ev=>{
-    const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.text=ev.target.value;
-  }));
-  el.querySelectorAll('[data-f="timer"]').forEach(e=>e.addEventListener('change',ev=>{
-    const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.timer=Math.max(0,parseInt(ev.target.value)||0);
-  }));
-  el.querySelectorAll('.opt-inp').forEach(e=>e.addEventListener('input',ev=>{
-    const q=qs.find(q=>q.id===ev.target.dataset.id);if(q)q.opts[+ev.target.dataset.oi]=ev.target.value;
-  }));
+/* ── SESSION ── */
+function startSession(){
+  if(!qs.length)return;
+  showScreen('sessionScreen');
+  initPeer();
+}
+
+function initPeer(){
+  if(peer){try{peer.destroy();}catch(e){}}
+  conns=[];studentCount=0;
+  const code=mkCode();
+  document.getElementById('sessCode').textContent='……';
+  peer=new Peer('classpoll-'+code.toLowerCase());
+  peer.on('open',()=>{
+    document.getElementById('sessCode').textContent=code;
+    const url=studentUrl(code);
+    document.getElementById('sessUrl').textContent=url;
+    document.getElementById('qrImg').src='https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=1a1410&bgcolor=ffffff&data='+encodeURIComponent(url);
+    updateStudCount();
+  });
+  peer.on('error',err=>{
+    if(err.type==='unavailable-id'){initPeer();}
+    else{alert('PeerJS error: '+err.type+'\n\nFalling back to Solo mode. Check your internet connection and reload to try again.');}
+  });
+  peer.on('connection',conn=>{
+    conns.push(conn);
+    conn.on('open',()=>{
+      studentCount++;updateStudCount();
+      // push current state if already presenting
+      if(document.getElementById('presentScreen').classList.contains('on')){
+        trySend(conn,buildState());
+      }
+    });
+    conn.on('data',d=>onStudentData(d));
+    conn.on('close',()=>{conns=conns.filter(c=>c!==conn);studentCount=Math.max(0,studentCount-1);updateStudCount();updateLiveN();});
+    conn.on('error',()=>{conns=conns.filter(c=>c!==conn);});
+  });
+}
+
+function studentUrl(code){
+  return window.location.href.replace(/[^/]*$/, '')+'student-poll.html?code='+code;
+}
+function mkCode(){const ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<6;i++)r+=ch[Math.floor(Math.random()*ch.length)];return r;}
+function updateStudCount(){
+  const n=studentCount;
+  document.getElementById('studsN').textContent=n;
+  document.getElementById('studsLbl').textContent='student'+(n!==1?'s':'')+' connected';
+  updateLiveN();
+}
+function updateLiveN(){document.getElementById('pLiveN').textContent=studentCount;}
+function endSession(){if(peer){try{peer.destroy();}catch(e){}}peer=null;conns=[];studentCount=0;liveMode=false;showScreen('setupScreen');renderQList();}
+
+/* ── STUDENT MESSAGES ── */
+function onStudentData(data){
+  if(!data||data.type!=='vote')return;
+  const{qIndex,optIndex,sid}=data.data;
+  if(qIndex!==cur||vState!=='open')return;
+  if(!voted.has(qIndex))voted.set(qIndex,new Set());
+  if(voted.get(qIndex).has(sid))return;
+  voted.get(qIndex).add(sid);
+  qs[cur].votes[optIndex]++;
+  refreshVoteDisplay();
+}
+function broadcast(msg){conns.forEach(c=>trySend(c,msg));}
+function trySend(c,msg){try{if(c&&c.open)c.send(msg);}catch(e){}}
+function buildState(){
+  const q=qs[cur];
+  return{type:'state',data:{status:vState,qIndex:cur,total:qs.length,question:{text:q.text,opts:q.opts},correct:revealed&&vState==='closed'?q.correct:-1}};
 }
 
 /* ── PRESENTING ── */
-function startPresenting(){
-  if(qs.length===0)return;
+function startSolo(){if(!qs.length)return;liveMode=false;go();}
+function beginPresenting(){liveMode=true;go();}
+function go(){
   qs.forEach(q=>{q.votes=q.opts.map(()=>0);});
-  cur=0; revealed=false;
+  voted.clear();cur=0;revealed=false;
   showScreen('presentScreen');
+  document.getElementById('pLive').style.display=liveMode?'flex':'none';
+  document.getElementById('soloNote').style.display=liveMode?'none':'block';
+  if(liveMode)updateLiveN();
   loadQ(cur);
 }
 
 function loadQ(i){
-  clearTimer(); vState='wait'; revealed=false;
+  clearTimer();vState='wait';revealed=false;
   const q=qs[i];
   document.getElementById('pTitle').textContent=document.getElementById('quizTitle').value||'Class Quiz';
-  document.getElementById('qProg').textContent=`Q ${i+1} / ${qs.length}`;
-  document.getElementById('qTxt').textContent=q.text||`Question ${i+1}`;
-  document.getElementById('resultsArea').style.display='none';
+  document.getElementById('qProg').textContent='Q '+(i+1)+' / '+qs.length;
+  document.getElementById('qTxt').textContent=q.text||'Question '+(i+1);
+  document.getElementById('resArea').style.display='none';
   document.getElementById('vtotal').textContent='';
-  setStatus('wait','Waiting to start');
-  renderVoteGrid(q);
-  renderCtrl();
+  setStat('sw','Waiting to start');
+  renderVoteGrid(q);renderCtrl();
+  if(liveMode)broadcast(buildState());
+}
+
+function refreshVoteDisplay(){
+  const total=qs[cur].votes.reduce((a,b)=>a+b,0);
+  document.getElementById('vtotal').textContent=total+' vote'+(total!==1?'s':'');
+  if(vState==='open')renderVoteGrid(qs[cur]);
+  else if(vState==='closed')showResults(revealed);
 }
 
 function renderVoteGrid(q){
   const g=document.getElementById('voteGrid');
   g.style.display='';
-  const isOpen=vState==='open';
+  const canTap=!liveMode&&vState==='open';
   g.innerHTML=q.opts.map((o,oi)=>`
-    <button class="vote-btn" style="background:${OC[oi%6]}"
-            onclick="castVote(${oi})" ${!isOpen?'disabled':''} data-oi="${oi}">
-      <span class="v-lbl">${OL[oi]}</span>
-      <span class="v-txt">${x(o||'…')}</span>
-      ${vState==='closed'?`<span class="v-badge">${q.votes[oi]}</span>`:''}
-    </button>
-  `).join('');
+    <button class="vbtn" style="background:${OC[oi%6]}"
+      onclick="${canTap?'castVote('+oi+')':'vState===\'open\'&&!liveMode?castVote('+oi+'):null'}" data-oi="${oi}"
+      ${liveMode&&vState!=='open'?'disabled':''}>
+      <span class="vbtn-lbl">${OL[oi]}</span>
+      <span class="vbtn-txt">${x(o||'…')}</span>
+      ${vState==='closed'?`<span class="vbtn-cnt">${q.votes[oi]}</span>`:''}
+    </button>`).join('');
 }
 
 function castVote(oi){
-  if(vState!=='open')return;
-  const q=qs[cur];
-  q.votes[oi]++;
-  const total=q.votes.reduce((a,b)=>a+b,0);
-  document.getElementById('vtotal').textContent=`${total} vote${total!==1?'s':''}`;
-  renderVoteGrid(q);
+  // Teacher manual tap (solo mode)
+  qs[cur].votes[oi]++;
+  refreshVoteDisplay();
+  const btn=document.querySelector(`[data-oi="${oi}"]`);
+  if(btn){const el=document.createElement('span');el.className='p1';el.textContent='+1';btn.appendChild(el);setTimeout(()=>el.remove(),750);}
 }
 
 function openVoting(){
-  vState='open'; const q=qs[cur];
-  q.votes=q.opts.map(()=>0);
-  setStatus('open','Voting open');
-  renderVoteGrid(q); renderCtrl();
+  vState='open';
+  qs[cur].votes=qs[cur].opts.map(()=>0);
+  if(voted.has(cur))voted.get(cur).clear();
+  setStat('so','Voting open');
+  renderVoteGrid(qs[cur]);renderCtrl();
   document.getElementById('vtotal').textContent='0 votes';
-  if(q.timer>0)startTimer(q.timer);
+  if(qs[cur].timer>0)startTimer(qs[cur].timer);
+  if(liveMode)broadcast(buildState());
 }
 
 function closeVoting(){
-  vState='closed'; clearTimer();
-  setStatus('done','Voting closed');
-  renderVoteGrid(qs[cur]);
-  showResults(false); renderCtrl();
+  vState='closed';clearTimer();
+  setStat('sc','Voting closed');
+  renderVoteGrid(qs[cur]);showResults(false);renderCtrl();
+  if(liveMode)broadcast(buildState());
 }
 
 function showResults(withCorrect){
-  const q=qs[cur];
-  const total=q.votes.reduce((a,b)=>a+b,0);
+  const q=qs[cur],total=q.votes.reduce((a,b)=>a+b,0);
   document.getElementById('voteGrid').style.display='none';
-  const area=document.getElementById('resultsArea');
-  area.style.display='flex';
-  const maxVotes=Math.max(...q.votes,1);
+  const area=document.getElementById('resArea');area.style.display='flex';
+  const maxV=Math.max(...q.votes,1);
   area.innerHTML=q.opts.map((o,oi)=>{
     const pct=total>0?Math.round(q.votes[oi]/total*100):0;
-    const isWin=q.votes[oi]===maxVotes&&total>0;
-    const isCorr=withCorrect&&q.correct===oi;
-    const barCol=isCorr?'#2ecc71':OC[oi%6];
-    return `
-      <div class="r-row">
-        <div class="r-dot" style="background:${OC[oi%6]}">${OL[oi]}</div>
-        <div class="r-label" title="${x(o||'…')}">${x(o||'…')}</div>
-        <div class="r-track">
-          <div class="r-bar${isCorr?' winner':''}" id="rb${oi}" style="background:${barCol};width:0%"></div>
-        </div>
-        <div class="r-pct">${pct}%</div>
-        ${q.correct===oi?`<span class="r-tick${withCorrect?' show':''}" id="rt${oi}">✅</span>`:'<span class="r-tick"></span>'}
-      </div>`;
-  }).join('');
-  document.getElementById('vtotal').textContent=`${total} vote${total!==1?'s':''} total`;
-  setTimeout(()=>{
-    q.opts.forEach((_,oi)=>{
-      const total2=q.votes.reduce((a,b)=>a+b,0);
-      const pct=total2>0?Math.round(q.votes[oi]/total2*100):0;
-      const b=document.getElementById('rb'+oi);
-      if(b)b.style.width=(pct>0?Math.max(pct,2):0)+'%';
-    });
-  },60);
+    const isC=withCorrect&&q.correct===oi;
+    return`<div class="r-row">
+      <div class="r-dot" style="background:${OC[oi%6]}">${OL[oi]}</div>
+      <div class="r-lbl">${x(o||'…')}</div>
+      <div class="r-track"><div class="r-bar${isC?' win':''}" id="rb${oi}" style="background:${isC?'#2ecc71':OC[oi%6]};width:0%"></div></div>
+      <div class="r-pct">${pct}%</div>
+      ${q.correct===oi?`<span class="r-tick${withCorrect?' show':''}" id="rt${oi}">✅</span>`:'<span class="r-tick"></span>'}
+    </div>`;}).join('');
+  document.getElementById('vtotal').textContent=total+' vote'+(total!==1?'s':'')+' total';
+  setTimeout(()=>{q.opts.forEach((_,oi)=>{const pct=total>0?Math.round(q.votes[oi]/total*100):0;const b=document.getElementById('rb'+oi);if(b)b.style.width=(pct>0?Math.max(pct,2):0)+'%';});},80);
 }
 
-function revealAnswer(){
-  revealed=true;
-  showResults(true);
-  renderCtrl();
-}
+function revealAnswer(){revealed=true;showResults(true);renderCtrl();if(liveMode)broadcast(buildState());}
 
 function renderCtrl(){
-  const isLast=cur>=qs.length-1;
-  const q=qs[cur];
-  let h='';
-  if(vState==='wait'){
-    h+=`<button class="cb cb-open" onclick="openVoting()">▶ Open voting</button>`;
-    if(cur>0)h+=`<button class="cb cb-ghost" onclick="prevQ()">← Prev</button>`;
-  } else if(vState==='open'){
-    h+=`<button class="cb cb-close" onclick="closeVoting()">⏹ Close & show results</button>`;
-  } else {
+  const last=cur>=qs.length-1,q=qs[cur];let h='';
+  if(vState==='wait')h=`<button class="cb cb-open" onclick="openVoting()">▶ Open voting</button>${cur>0?'<button class="cb cb-ghost" onclick="prevQ()">← Prev</button>':''}`;
+  else if(vState==='open')h=`<button class="cb cb-close" onclick="closeVoting()">⏹ Close & show results</button>`;
+  else{
     if(q.correct>=0&&!revealed)h+=`<button class="cb cb-reveal" onclick="revealAnswer()">🔑 Reveal answer</button>`;
-    if(isLast)h+=`<button class="cb cb-summary" onclick="showSummary()">📊 View summary</button>`;
-    else h+=`<button class="cb cb-next" onclick="nextQ()">Next question →</button>`;
+    if(last)h+=`<button class="cb cb-sum" onclick="doSummary()">📊 Summary</button>`;
+    else h+=`<button class="cb cb-next" onclick="nextQ()">Next →</button>`;
   }
   document.getElementById('pCtrl').innerHTML=h;
 }
-
 function nextQ(){if(cur<qs.length-1){cur++;loadQ(cur);}}
 function prevQ(){if(cur>0){cur--;loadQ(cur);}}
 
 /* ── TIMER ── */
-function startTimer(secs){
-  tLeft=secs;
-  const ring=document.getElementById('tRing');
-  const circ=document.getElementById('tCircle');
-  const lbl=document.getElementById('tLabel');
-  const C=131.9;
-  ring.style.display='block';
-  lbl.textContent=secs;
-  circ.style.strokeDashoffset='0';
-  circ.style.stroke='#f39c12';
+function startTimer(s){
+  tLeft=s;const ring=document.getElementById('tRing'),circ=document.getElementById('tCircle'),lbl=document.getElementById('tLbl'),C=131.9;
+  ring.style.display='block';lbl.textContent=s;circ.style.strokeDashoffset='0';circ.style.stroke='#f39c12';
   tInt=setInterval(()=>{
-    tLeft--;
-    lbl.textContent=Math.max(0,tLeft);
-    circ.style.strokeDashoffset=C*(1-(tLeft/secs));
+    tLeft--;lbl.textContent=Math.max(0,tLeft);
+    circ.style.strokeDashoffset=C*(1-tLeft/s);
     if(tLeft<=5)circ.style.stroke='#e74c3c';
     if(tLeft<=0){clearTimer();closeVoting();}
   },1000);
 }
-
-function clearTimer(){
-  clearInterval(tInt);
-  document.getElementById('tRing').style.display='none';
-}
+function clearTimer(){clearInterval(tInt);document.getElementById('tRing').style.display='none';}
 
 /* ── SUMMARY ── */
-function showSummary(){
+function doSummary(){
+  if(liveMode)broadcast({type:'summary'});
   showScreen('summaryScreen');
-  const withAnswers=qs.filter(q=>q.correct>=0).length;
-  document.getElementById('sumSub').textContent=
-    `${qs.length} question${qs.length!==1?'s':''} · ${withAnswers} with correct answer${withAnswers!==1?'s':''}`;
-  const body=document.getElementById('sumBody');
-  body.innerHTML=qs.map((q,qi)=>{
+  const wa=qs.filter(q=>q.correct>=0).length;
+  document.getElementById('sumSub').textContent=qs.length+' question'+(qs.length!==1?'s':'')+' · '+wa+' with answer'+(wa!==1?'s':'');
+  document.getElementById('sumBody').innerHTML=qs.map((q,qi)=>{
     const total=(q.votes||[]).reduce((a,b)=>a+b,0);
-    return `
-      <div class="sum-q">
-        <div class="sum-qt">${qi+1}. ${x(q.text||'(no question text)')}</div>
-        <div class="sum-opts">
-          ${q.opts.map((o,oi)=>{
-            const v=(q.votes&&q.votes[oi])||0;
-            const pct=total>0?Math.round(v/total*100):0;
-            const isC=q.correct===oi;
-            return `
-              <div class="sum-row">
-                <div style="width:22px;height:22px;border-radius:5px;background:${OC[oi%6]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;font-family:'Outfit',sans-serif">${OL[oi]}</div>
-                <div style="width:115px;font-size:12px;color:rgba(255,255,255,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${x(o||'…')}</div>
-                <div class="sum-track"><div class="sum-bar" style="width:${pct}%;background:${isC?'#2ecc71':OC[oi%6]}"></div></div>
-                <div style="font-size:12px;font-weight:600;min-width:36px;text-align:right;color:rgba(255,255,255,.65);flex-shrink:0">${pct}%</div>
-                ${isC?'<span style="margin-left:5px;font-size:13px">✅</span>':''}
-              </div>`;
-          }).join('')}
-        </div>
-        <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:8px">${total} vote${total!==1?'s':''}</div>
-      </div>`;
-  }).join('');
+    return`<div class="sum-q"><div class="sum-qt">${qi+1}. ${x(q.text||'(no text)')}</div>
+      ${q.opts.map((o,oi)=>{const v=(q.votes&&q.votes[oi])||0;const pct=total>0?Math.round(v/total*100):0;const isC=q.correct===oi;
+        return`<div class="sum-row">
+          <div style="width:22px;height:22px;border-radius:5px;background:${OC[oi%6]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${OL[oi]}</div>
+          <div style="width:110px;font-size:12px;color:rgba(255,255,255,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0">${x(o||'…')}</div>
+          <div class="sum-track"><div class="sum-bar" style="width:${pct}%;background:${isC?'#2ecc71':OC[oi%6]}"></div></div>
+          <div style="font-size:12px;font-weight:600;min-width:36px;text-align:right;color:rgba(255,255,255,.65)">${pct}%</div>
+          ${isC?'<span style="margin-left:5px;font-size:13px">✅</span>':''}
+        </div>`;}).join('')}
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:8px">${total} vote${total!==1?'s':''}</div>
+    </div>`;}).join('');
 }
 
 /* ── UTILS ── */
-function setStatus(type,txt){
-  const p=document.getElementById('statusPill');
-  p.className=`status s-${type}`;
-  document.getElementById('statusTxt').textContent=txt;
-}
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-function goSetup(){
-  clearTimer();
-  showScreen('setupScreen');
-  renderQList();
-}
+function setStat(cls,txt){const p=document.getElementById('statusPill');p.className='status-pill '+cls;document.getElementById('statusTxt').textContent=txt;}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
+function goSetup(){clearTimer();if(peer)endSession();else showScreen('setupScreen');renderQList();}
 function x(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function rnd(){return Math.random().toString(36).slice(2,6);}
 
-/* ── INIT ── */
-addTpl('mc4');
-qs[0].text='';
-renderQList();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')goSetup();});
+addTpl('mc4');qs[0].text='';renderQList();
 </script>
 </body>
 </html>

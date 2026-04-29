@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Class Poll — Join</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1923;--surf:rgba(255,255,255,.06);--bd:rgba(255,255,255,.12);
+  --txt:#fff;--muted:rgba(255,255,255,.5);--dim:rgba(255,255,255,.25);
+  --oc0:#e74c3c;--oc1:#2980b9;--oc2:#27ae60;--oc3:#e67e22;--oc4:#8e44ad;--oc5:#16a085;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:420px;gap:1.25rem;text-align:center}
+.screen.on{display:flex}
+
+/* ── JOIN ── */
+.app-icon{font-size:44px;line-height:1}
+.app-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:var(--txt)}
+.app-sub{font-size:14px;color:var(--muted);line-height:1.5}
+.code-field{width:100%;background:var(--surf);border:2px solid var(--bd);border-radius:16px;padding:1rem 1.25rem;font-family:'Outfit',sans-serif;font-size:clamp(26px,8vw,38px);font-weight:900;color:var(--txt);text-align:center;letter-spacing:.2em;outline:none;text-transform:uppercase;transition:border-color .15s;caret-color:var(--oc2)}
+.code-field:focus{border-color:rgba(255,255,255,.35)}
+.code-field::placeholder{color:rgba(255,255,255,.2);font-size:clamp(18px,5vw,26px);letter-spacing:.1em}
+.join-btn{width:100%;background:#27ae60;border:none;border-radius:14px;padding:18px;font-family:'Outfit',sans-serif;font-size:20px;font-weight:900;color:#fff;cursor:pointer;transition:background .15s,transform .1s}
+.join-btn:hover{background:#219a52}
+.join-btn:active{transform:scale(.98)}
+.join-btn:disabled{background:#333;cursor:not-allowed;color:rgba(255,255,255,.4)}
+.err-msg{background:rgba(231,76,60,.15);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:.75rem 1rem;font-size:14px;color:#e74c3c;line-height:1.5}
+
+/* ── CONNECTING ── */
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,.1);border-top-color:#27ae60;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.conn-txt{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--muted)}
+
+/* ── WAITING ── */
+.wait-icon{font-size:52px;line-height:1}
+.wait-title{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800}
+.wait-sub{font-size:14px;color:var(--muted);line-height:1.6}
+.dots span{display:inline-block;animation:dot 1.2s ease-in-out infinite;font-size:24px;color:var(--muted);margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+.session-tag{background:var(--surf);border:1px solid var(--bd);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--dim);font-family:'Outfit',sans-serif;font-weight:600;letter-spacing:.08em}
+
+/* ── QUESTION ── */
+.q-header{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--dim);align-self:center;display:flex;align-items:center;gap:6px}
+.q-header::before,.q-header::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08);min-width:20px}
+.q-text{font-family:'Outfit',sans-serif;font-size:clamp(18px,5vw,26px);font-weight:800;color:var(--txt);line-height:1.35}
+.opts{display:flex;flex-direction:column;gap:10px;width:100%}
+.opt-btn{border:none;border-radius:14px;padding:18px 16px;font-family:'Outfit',sans-serif;font-size:17px;font-weight:800;color:#fff;cursor:pointer;display:flex;align-items:center;gap:14px;text-align:left;transition:transform .1s,filter .12s;-webkit-tap-highlight-color:transparent}
+.opt-btn:hover{filter:brightness(1.1)}
+.opt-btn:active{transform:scale(.97)}
+.opt-lbl{width:34px;height:34px;border-radius:8px;background:rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0}
+.opt-txt{flex:1;line-height:1.3}
+
+/* ── VOTED ── */
+.voted-icon{font-size:52px;line-height:1}
+.voted-title{font-family:'Outfit',sans-serif;font-size:22px;font-weight:900;color:#2ecc71}
+.voted-sub{font-size:14px;color:var(--muted);line-height:1.6}
+.voted-choice{background:var(--surf);border:1.5px solid var(--bd);border-radius:12px;padding:14px 18px;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:12px;width:100%}
+.voted-swatch{width:30px;height:30px;border-radius:7px;flex-shrink:0}
+
+/* ── RESULT FLASH ── */
+.rf-icon{font-size:52px;line-height:1}
+.rf-title{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800}
+.rf-note{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* ── DISCONNECTED ── */
+.dc-icon{font-size:48px;line-height:1;opacity:.6}
+.dc-title{font-family:'Outfit',sans-serif;font-size:20px;font-weight:800;color:var(--muted)}
+.dc-sub{font-size:14px;color:var(--dim);line-height:1.5}
+.retry-btn{background:var(--surf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 24px;font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--txt);cursor:pointer;transition:background .15s}
+.retry-btn:hover{background:rgba(255,255,255,.12)}
+
+html{overflow:auto}
+body{overflow:auto;min-height:100vh;height:auto;justify-content:flex-start;padding-top:max(2rem,env(safe-area-inset-top));padding-bottom:max(2rem,env(safe-area-inset-bottom))}
+.screen{padding:0 .25rem;min-height:calc(100vh - 4rem);justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- JOIN -->
+<div class="screen on" id="joinScreen">
+  <div class="app-icon">📊</div>
+  <div class="app-name">Class Poll</div>
+  <div class="app-sub">Enter the code shown on the board<br>to join this session</div>
+  <input class="code-field" id="codeInput" type="text" maxlength="6" placeholder="XXXXXX" autocomplete="off" autocorrect="off" spellcheck="false" oninput="onCodeInput()" onkeydown="if(event.key==='Enter')tryJoin()" />
+  <button class="join-btn" id="joinBtn" onclick="tryJoin()" disabled>Join →</button>
+  <div class="err-msg" id="errMsg" style="display:none"></div>
+</div>
+
+<!-- CONNECTING -->
+<div class="screen" id="connectingScreen">
+  <div class="spinner"></div>
+  <div class="conn-txt" id="connTxt">Connecting…</div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="waitingScreen">
+  <div class="wait-icon">⏳</div>
+  <div class="wait-title">Waiting for the teacher…</div>
+  <div class="wait-sub">You're connected! Sit tight —<br>the question will appear here when voting opens.</div>
+  <div class="dots"><span>•</span><span>•</span><span>•</span></div>
+  <div class="session-tag" id="sessTag">Session: ——</div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="questionScreen">
+  <div class="q-header">Question <span id="qNum">1</span> of <span id="qTotal">1</span></div>
+  <div class="q-text" id="qText">Loading…</div>
+  <div class="opts" id="optsList"></div>
+</div>
+
+<!-- VOTED -->
+<div class="screen" id="votedScreen">
+  <div class="voted-icon">✅</div>
+  <div class="voted-title">Answer recorded!</div>
+  <div class="voted-choice" id="votedChoice">
+    <div class="voted-swatch" id="votedSwatch"></div>
+    <span id="votedOptTxt">Your answer</span>
+  </div>
+  <div class="voted-sub">Waiting for your teacher to close voting<br>and show results…</div>
+  <div class="dots"><span>•</span><span>•</span><span>•</span></div>
+</div>
+
+<!-- RESULT FLASH (closed) -->
+<div class="screen" id="resultScreen">
+  <div class="rf-icon" id="rfIcon">📊</div>
+  <div class="rf-title" id="rfTitle">Results are up!</div>
+  <div class="rf-note">Look at the board to see how the class voted.</div>
+</div>
+
+<!-- SUMMARY -->
+<div class="screen" id="summaryScreen">
+  <div class="rf-icon">🎉</div>
+  <div class="rf-title">Quiz complete!</div>
+  <div class="rf-note">Check the board for the full summary.</div>
+  <button class="retry-btn" onclick="goJoin()">← Join another session</button>
+</div>
+
+<!-- DISCONNECTED -->
+<div class="screen" id="dcScreen">
+  <div class="dc-icon">📵</div>
+  <div class="dc-title">Disconnected</div>
+  <div class="dc-sub" id="dcMsg">Connection to the teacher was lost.</div>
+  <button class="retry-btn" onclick="goJoin()">Try again</button>
+</div>
+
+<script>
+const OC=['#e74c3c','#2980b9','#27ae60','#e67e22','#8e44ad','#16a085'];
+const OL=['A','B','C','D','E','F'];
+
+let peer=null, teacherConn=null, myId=getOrMakeId(), sessionCode='';
+let currentQ=null, currentQIndex=0, hasVotedQ=false;
+
+function getOrMakeId(){
+  let id=localStorage.getItem('pollStudentId');
+  if(!id){id='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);localStorage.setItem('pollStudentId',id);}
+  return id;
+}
+
+/* ── URL AUTO-JOIN ── */
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  const c=p.get('code');
+  if(c){document.getElementById('codeInput').value=c.toUpperCase();onCodeInput();setTimeout(tryJoin,300);}
+})();
+
+function onCodeInput(){
+  const v=document.getElementById('codeInput').value.trim();
+  document.getElementById('joinBtn').disabled=v.length<4;
+  document.getElementById('errMsg').style.display='none';
+}
+
+function tryJoin(){
+  const code=document.getElementById('codeInput').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(code.length<4)return;
+  sessionCode=code;
+  showErr('');
+  showScreen('connectingScreen');
+  document.getElementById('connTxt').textContent='Connecting to session '+code+'…';
+  connect(code);
+}
+
+function connect(code){
+  if(peer){try{peer.destroy();}catch(e){}}
+  peer=new Peer();
+  peer.on('open',()=>{
+    teacherConn=peer.connect('classpoll-'+code.toLowerCase(),{reliable:true});
+    let opened=false;
+    const timeout=setTimeout(()=>{
+      if(!opened){showDC('Could not reach session "'+code+'". Check the code and try again.');}
+    },12000);
+    teacherConn.on('open',()=>{
+      opened=true;clearTimeout(timeout);
+      document.getElementById('sessTag').textContent='Session: '+code;
+      showScreen('waitingScreen');
+    });
+    teacherConn.on('data',onTeacherData);
+    teacherConn.on('close',()=>showDC('Connection to the session was closed.'));
+    teacherConn.on('error',()=>showDC('Connection error. Make sure you\'re on the same network and try again.'));
+  });
+  peer.on('error',err=>{
+    if(err.type==='peer-unavailable')showDC('Session "'+code+'" not found. Check the code and try again.');
+    else showDC('Connection error ('+err.type+'). Check your network and retry.');
+  });
+}
+
+function onTeacherData(data){
+  if(!data)return;
+  if(data.type==='state'){
+    const{status,qIndex,total,question,correct}=data.data;
+    currentQIndex=qIndex;
+    if(status==='waiting'){showScreen('waitingScreen');hasVotedQ=false;}
+    else if(status==='open'){
+      if(hasVotedQ){showScreen('votedScreen');}
+      else{showQuestion(question,qIndex,total);}
+    }
+    else if(status==='closed'){
+      showResultFlash(correct);
+    }
+  } else if(data.type==='summary'){
+    showScreen('summaryScreen');
+  }
+}
+
+function showQuestion(q,qi,total){
+  hasVotedQ=false;
+  currentQ=q;
+  document.getElementById('qNum').textContent=qi+1;
+  document.getElementById('qTotal').textContent=total;
+  document.getElementById('qText').textContent=q.text||'Question '+(qi+1);
+  const opts=document.getElementById('optsList');
+  opts.innerHTML=q.opts.map((o,oi)=>`
+    <button class="opt-btn" style="background:${OC[oi%6]}" onclick="vote(${oi})">
+      <span class="opt-lbl">${OL[oi]}</span>
+      <span class="opt-txt">${xesc(o||'…')}</span>
+    </button>`).join('');
+  showScreen('questionScreen');
+}
+
+function vote(oi){
+  if(hasVotedQ||!teacherConn||!teacherConn.open)return;
+  hasVotedQ=true;
+  try{
+    teacherConn.send({type:'vote',data:{qIndex:currentQIndex,optIndex:oi,sid:myId}});
+  }catch(e){}
+  // show voted screen
+  document.getElementById('votedSwatch').style.background=OC[oi%6];
+  document.getElementById('votedOptTxt').textContent=(currentQ&&currentQ.opts[oi])||'Option '+OL[oi];
+  showScreen('votedScreen');
+}
+
+function showResultFlash(correct){
+  const icon=correct>=0?'✅':'📊';
+  const title=correct>=0?'Answer revealed — check the board!':'Results are in!';
+  document.getElementById('rfIcon').textContent=icon;
+  document.getElementById('rfTitle').textContent=title;
+  showScreen('resultScreen');
+  // auto-go to waiting after 4s
+  setTimeout(()=>{if(document.getElementById('resultScreen').classList.contains('on'))showScreen('waitingScreen');},4000);
+}
+
+function showDC(msg){
+  document.getElementById('dcMsg').textContent=msg||'Connection lost.';
+  showScreen('dcScreen');
+}
+function showErr(msg){
+  const el=document.getElementById('errMsg');
+  if(msg){el.textContent=msg;el.style.display='block';}
+  else el.style.display='none';
+}
+function goJoin(){showScreen('joinScreen');}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  window.scrollTo(0,0);
+}
+function xesc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body>
+</html>
