@@ -298,7 +298,7 @@ footer strong{color:var(--ink);font-weight:600}
     <h1>Interactive tools for<br><em>every lesson</em></h1>
     <p class="hero-sub">Free, self-contained HTML tools designed for teachers. Open any tool in your browser, embed it in Canvas, or project it on your board — no accounts, no installs, no fuss.</p>
     <div class="hero-stats">
-      <div class="stat"><span class="stat-num" id="toolCount">3</span><span class="stat-lbl">tools available</span></div>
+      <div class="stat"><span class="stat-num" id="toolCount">5</span><span class="stat-lbl">tools available</span></div>
       <div class="stat"><span class="stat-num">0</span><span class="stat-lbl">accounts needed</span></div>
       <div class="stat"><span class="stat-num">∞</span><span class="stat-lbl">classes, reuses</span></div>
     </div>
@@ -311,7 +311,7 @@ footer strong{color:var(--ink);font-weight:600}
   <!-- Available tools -->
   <div class="section-header">
     <h2 class="section-title">Available tools</h2>
-    <span class="section-count" id="availCount">3 ready</span>
+    <span class="section-count" id="availCount">5 ready</span>
     <div class="section-rule"></div>
   </div>
 
@@ -345,19 +345,16 @@ footer strong{color:var(--ink);font-weight:600}
       <div class="tool-card-body">
         <div class="tool-icon" style="background:#fdecea">📊</div>
         <div class="tool-title">Live Poll & Quiz</div>
-        <div class="tool-desc">Build multiple-choice questions and project live results as an animated bar chart. Includes a countdown timer and correct-answer reveal. No Kahoot account needed.</div>
+        <div class="tool-desc">Students join live from their own devices using a session code or QR scan. Results update on the teacher's board in real time. Includes a countdown timer and correct-answer reveal. No accounts needed — uses two files: <strong>live-poll-quiz.html</strong> (teacher) and <strong>student-poll.html</strong> (students, embed this one in Canvas).</div>
         <div class="tool-tags">
           <span class="tag">Assessment</span>
-          <span class="tag">Quiz</span>
           <span class="tag">Live results</span>
+          <span class="tag">Student devices</span>
         </div>
       </div>
       <div class="tool-card-footer">
-        <a class="launch-btn" href="./live-poll-quiz.html" target="_blank">Open tool →</a>
-        <button class="embed-btn" onclick="copyEmbed('live-poll-quiz.html',this)">
-          &lt;/&gt; Embed
-          <span class="copied-tip">Copied!</span>
-        </button>
+        <a class="launch-btn" href="./live-poll-quiz.html" target="_blank">Teacher view →</a>
+        <a class="launch-btn" href="./student-poll.html" target="_blank" style="background:#2980b9">Student view →</a>
       </div>
     </div>
 
@@ -377,6 +374,50 @@ footer strong{color:var(--ink);font-weight:600}
       <div class="tool-card-footer">
         <a class="launch-btn" href="./group-randomiser.html" target="_blank">Open tool →</a>
         <button class="embed-btn" onclick="copyEmbed('group-randomiser.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Exit Ticket -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#27ae60"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#e9f7ef">🎟️</div>
+        <div class="tool-title">Exit Ticket</div>
+        <div class="tool-desc">Project a quick end-of-lesson check-in — traffic light, emoji scale, star rating, thumbs, or custom options. Tap responses live as students answer, see instant results with an auto-generated class insight, and save sessions to track trends over time.</div>
+        <div class="tool-tags">
+          <span class="tag">Assessment</span>
+          <span class="tag">Check-in</span>
+          <span class="tag">Reflection</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./exit-ticket.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('exit-ticket.html',this)">
+          &lt;/&gt; Embed
+          <span class="copied-tip">Copied!</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Seating Plan Builder -->
+    <div class="tool-card">
+      <div class="tool-card-accent" style="background:#8e44ad"></div>
+      <div class="tool-card-body">
+        <div class="tool-icon" style="background:#f5eefb">🪑</div>
+        <div class="tool-title">Seating Plan Builder</div>
+        <div class="tool-desc">Build and save classroom seating plans on a configurable grid. Click students from your list to place them, drag between desks to swap, add notes per student, random-fill in one click, and print a clean chart.</div>
+        <div class="tool-tags">
+          <span class="tag">Organisation</span>
+          <span class="tag">Classroom</span>
+          <span class="tag">Printable</span>
+        </div>
+      </div>
+      <div class="tool-card-footer">
+        <a class="launch-btn" href="./seating-plan-builder.html" target="_blank">Open tool →</a>
+        <button class="embed-btn" onclick="copyEmbed('seating-plan-builder.html',this)">
           &lt;/&gt; Embed
           <span class="copied-tip">Copied!</span>
         </button>
@@ -409,26 +450,10 @@ footer strong{color:var(--ink);font-weight:600}
       </div>
     </div>
     <div class="soon-card">
-      <span class="soon-icon">🚪</span>
-      <div class="soon-body">
-        <div class="soon-title">Exit Ticket</div>
-        <div class="soon-desc">Quick end-of-lesson check-in displayed live on the board.</div>
-        <span class="soon-pill">Planned</span>
-      </div>
-    </div>
-    <div class="soon-card">
       <span class="soon-icon">🔤</span>
       <div class="soon-body">
         <div class="soon-title">Vocabulary Flashcards</div>
         <div class="soon-desc">Teacher-built term/definition decks students flip through.</div>
-        <span class="soon-pill">Planned</span>
-      </div>
-    </div>
-    <div class="soon-card">
-      <span class="soon-icon">🪑</span>
-      <div class="soon-body">
-        <div class="soon-title">Seating Plan Builder</div>
-        <div class="soon-desc">Drag students into desk slots on a configurable classroom grid.</div>
         <span class="soon-pill">Planned</span>
       </div>
     </div>
