@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>True / False Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #1a1510;
+  --cream: #f6f2eb;
+  --cream2: #ede8df;
+  --border: #ddd5c8;
+  --muted: #7a6a58;
+  --white: #fff;
+  --true: #27ae60;
+  --true-light: #eafaf1;
+  --false: #e74c3c;
+  --false-light: #fdecea;
+  --blue: #2980b9;
+}
+
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+
+.screen { display: none; flex-direction: column; flex: 1; }
+.screen.on { display: flex; }
+
+/* ══ TOPBAR ══ */
+.topbar { background: var(--ink); color: #fff; height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 1.25rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.topbar-icon { font-size: 20px; flex-shrink: 0; }
+.topbar-title { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 800; flex: 1; color: #fff; }
+.topbar-sub { font-size: 12px; color: rgba(255,255,255,.4); font-weight: 400; margin-left: 4px; }
+.tbtn { background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.18); color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+.tbtn:hover { background: rgba(255,255,255,.22); }
+.tbtn.go { background: var(--true); border-color: transparent; }
+.tbtn.go:hover { background: #219a52; }
+.tbtn.go:disabled { background: #555; cursor: not-allowed; }
+
+/* ══ SETUP BODY ══ */
+.setup-body { max-width: 740px; margin: 0 auto; padding: 1.5rem; width: 100%; flex: 1; }
+
+.setup-hint { background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; padding: .85rem 1rem; font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
+.setup-hint strong { color: var(--ink); }
+
+/* Set name */
+.set-name-row { display: flex; gap: 10px; align-items: center; margin-bottom: 1.25rem; }
+.set-name-inp { flex: 1; border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 13px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; background: var(--white); transition: border-color .15s; }
+.set-name-inp:focus { border-color: #888; }
+
+/* Saved sets */
+.saved-row { display: flex; align-items: center; gap: 8px; background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; padding: 7px 11px; margin-bottom: 1.5rem; }
+.saved-lbl { font-size: 11px; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+.saved-sel { flex: 1; border: none; outline: none; font-size: 13px; font-family: 'DM Sans', sans-serif; background: transparent; color: var(--ink); cursor: pointer; }
+.sv-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 11px; font-size: 11px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.sv-btn:hover { border-color: #888; color: var(--ink); }
+.sv-btn.load { background: var(--blue); border-color: transparent; color: #fff; }
+.sv-btn.load:hover { background: #1a6ea8; }
+
+/* Import paste */
+.import-toggle { background: none; border: none; font-size: 12px; font-weight: 600; color: var(--blue); cursor: pointer; font-family: 'DM Sans', sans-serif; text-decoration: underline; margin-bottom: .75rem; display: block; }
+.import-box { background: var(--white); border: 1.5px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: 1.25rem; }
+.import-ta { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 13px; font-family: 'DM Sans', sans-serif; resize: none; outline: none; color: var(--ink); line-height: 1.7; height: 110px; }
+.import-ta:focus { border-color: #888; }
+.import-hint { font-size: 11px; color: var(--muted); margin: 6px 0; line-height: 1.5; }
+.import-btn { background: var(--ink); color: #fff; border: none; border-radius: 7px; padding: 7px 16px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; margin-top: 6px; }
+.import-btn:hover { background: #3a2e26; }
+
+/* Question cards */
+.q-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.q-card { background: var(--white); border: 1.5px solid var(--border); border-radius: 13px; padding: 1rem 1.1rem; display: flex; gap: 12px; align-items: flex-start; transition: border-color .15s; }
+.q-card:focus-within { border-color: #aaa; }
+
+.q-num { width: 26px; height: 26px; border-radius: 50%; background: var(--cream2); color: var(--muted); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 8px; font-family: 'Outfit', sans-serif; }
+
+.q-main { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+
+.q-inp { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 11px; font-size: 15px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; resize: none; line-height: 1.45; transition: border-color .15s; }
+.q-inp:focus { border-color: #888; }
+.q-inp::placeholder { color: #bbb; }
+
+.q-explanation-inp { width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; }
+.q-explanation-inp:focus { border-color: #888; }
+.q-explanation-inp::placeholder { color: #bbb; font-style: italic; }
+
+.q-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* T/F toggle */
+.tf-toggle { display: flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+.tf-opt { padding: 6px 16px; font-size: 13px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; border: none; background: var(--cream2); color: var(--muted); transition: all .15s; }
+.tf-opt:first-child { border-right: 1.5px solid var(--border); }
+.tf-opt.true-active { background: var(--true); color: #fff; }
+.tf-opt.false-active { background: var(--false); color: #fff; }
+
+.q-rm { background: none; border: none; color: #ccc; font-size: 16px; cursor: pointer; padding: 4px; border-radius: 4px; transition: color .15s; flex-shrink: 0; margin-top: 7px; }
+.q-rm:hover { color: var(--false); }
+
+/* Timer row */
+.timer-row { display: flex; align-items: center; gap: 7px; margin-left: auto; font-size: 12px; color: var(--muted); }
+.timer-inp { width: 52px; border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 7px; font-size: 13px; font-family: 'DM Sans', sans-serif; text-align: center; outline: none; color: var(--ink); }
+
+.add-q-btn { width: 100%; background: var(--white); border: 2px dashed var(--border); border-radius: 13px; padding: 13px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; color: var(--muted); cursor: pointer; transition: all .15s; }
+.add-q-btn:hover { background: var(--cream2); border-color: #aaa; color: var(--ink); }
+
+.empty-qs { text-align: center; padding: 2.5rem 1rem; color: #aaa; font-size: 14px; }
+
+/* ══ PRESENT SCREEN ══ */
+#presentScreen { background: #0d1117; color: #fff; min-height: 100vh; }
+
+.p-topbar { background: rgba(0,0,0,.4); border-bottom: 1px solid rgba(255,255,255,.07); height: 52px; display: flex; align-items: center; padding: 0 1.25rem; gap: 12px; flex-shrink: 0; }
+.p-set-name { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,255,255,.4); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-prog-wrap { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.p-prog-dots { display: flex; gap: 5px; }
+.p-prog-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); transition: background .3s; }
+.p-prog-dot.cur { background: #fff; }
+.p-prog-dot.done-true { background: var(--true); }
+.p-prog-dot.done-false { background: var(--false); }
+.p-prog-text { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; color: rgba(255,255,255,.5); }
+.p-back { background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.14); border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,.6); cursor: pointer; transition: background .15s; flex-shrink: 0; }
+.p-back:hover { background: rgba(255,255,255,.16); }
+
+/* Timer bar */
+.timer-bar-wrap { height: 4px; background: rgba(255,255,255,.07); flex-shrink: 0; position: relative; overflow: hidden; }
+.timer-bar-fill { height: 100%; background: var(--true); transition: width 1s linear, background .3s; }
+
+/* Main stage */
+.p-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 2.5rem; gap: 0; position: relative; }
+
+/* Question number badge */
+.q-badge { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.3); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; align-self: center; }
+.q-badge::before, .q-badge::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); min-width: 40px; }
+
+/* Question text */
+.p-question { font-family: 'Outfit', sans-serif; font-size: clamp(22px, 4vw, 48px); font-weight: 800; color: #fff; text-align: center; line-height: 1.25; max-width: 780px; margin-bottom: 2.5rem; }
+
+/* T/F reveal buttons */
+.tf-reveal-row { display: flex; gap: 20px; justify-content: center; margin-bottom: 2rem; }
+.tf-reveal-btn { border: none; border-radius: 20px; padding: 22px 52px; font-family: 'Outfit', sans-serif; font-size: clamp(28px, 5vw, 52px); font-weight: 900; cursor: pointer; transition: transform .12s, filter .12s, box-shadow .2s; letter-spacing: .02em; position: relative; overflow: hidden; }
+.tf-reveal-btn::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: background .15s; border-radius: inherit; }
+.tf-reveal-btn:hover::after { background: rgba(255,255,255,.1); }
+.tf-reveal-btn:active { transform: scale(.96); }
+.tf-reveal-btn.t-btn { background: rgba(39,174,96,.18); border: 2.5px solid rgba(39,174,96,.4); color: rgba(39,174,96,.7); }
+.tf-reveal-btn.f-btn { background: rgba(231,76,60,.18); border: 2.5px solid rgba(231,76,60,.4); color: rgba(231,76,60,.7); }
+
+/* Revealed states */
+.tf-reveal-btn.t-btn.revealed-correct { background: var(--true); border-color: var(--true); color: #fff; box-shadow: 0 0 40px rgba(39,174,96,.5), 0 8px 24px rgba(0,0,0,.3); transform: scale(1.06); animation: popIn .35s cubic-bezier(.34,1.56,.64,1) forwards; }
+.tf-reveal-btn.f-btn.revealed-correct { background: var(--false); border-color: var(--false); color: #fff; box-shadow: 0 0 40px rgba(231,76,60,.5), 0 8px 24px rgba(0,0,0,.3); transform: scale(1.06); animation: popIn .35s cubic-bezier(.34,1.56,.64,1) forwards; }
+.tf-reveal-btn.revealed-wrong { opacity: .25; transform: scale(.94); filter: grayscale(.7); }
+
+@keyframes popIn { 0% { transform: scale(.9); } 60% { transform: scale(1.1); } 100% { transform: scale(1.06); } }
+
+/* Hint text */
+.reveal-hint { font-size: 14px; color: rgba(255,255,255,.3); font-family: 'DM Sans', sans-serif; font-weight: 500; display: flex; align-items: center; gap: 6px; animation: fadeUp .4s ease; }
+.reveal-hint.hidden { opacity: 0; pointer-events: none; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Explanation box */
+.explanation-box { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 1.1rem 1.5rem; max-width: 640px; text-align: center; font-size: clamp(14px, 2vw, 18px); color: rgba(255,255,255,.75); line-height: 1.6; margin-top: .5rem; font-family: 'DM Sans', sans-serif; animation: fadeUp .5s ease; display: none; }
+.explanation-box.show { display: block; }
+.explanation-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: rgba(255,255,255,.3); margin-bottom: 5px; }
+
+/* Nav controls */
+.p-controls { display: flex; gap: 12px; align-items: center; justify-content: center; padding: 1.25rem 1.25rem 1.75rem; flex-shrink: 0; flex-wrap: wrap; }
+.ctrl-btn { border: none; border-radius: 12px; padding: 12px 28px; font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 7px; }
+.ctrl-btn:disabled { opacity: .25; cursor: not-allowed; }
+.ctrl-prev { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1.5px solid rgba(255,255,255,.14); }
+.ctrl-prev:hover:not(:disabled) { background: rgba(255,255,255,.16); }
+.ctrl-next { background: #fff; color: var(--ink); }
+.ctrl-next:hover:not(:disabled) { background: #f0ede8; }
+.ctrl-reveal { background: rgba(255,255,255,.12); color: #fff; border: 1.5px solid rgba(255,255,255,.2); }
+.ctrl-reveal:hover:not(:disabled) { background: rgba(255,255,255,.2); }
+.ctrl-restart { background: rgba(255,255,255,.08); color: rgba(255,255,255,.6); border: 1.5px solid rgba(255,255,255,.14); }
+.ctrl-restart:hover { background: rgba(255,255,255,.16); }
+
+/* Keyboard hint */
+.key-hint { font-size: 11px; color: rgba(255,255,255,.2); text-align: center; padding-bottom: 1rem; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }
+.kbd { display: inline-block; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 4px; padding: 1px 6px; font-size: 10px; font-family: monospace; margin: 0 2px; }
+
+/* ══ FINISH SCREEN ══ */
+#finishScreen { background: #0d1117; color: #fff; align-items: center; justify-content: center; gap: 1.5rem; padding: 2rem; text-align: center; }
+.finish-icon { font-size: 56px; line-height: 1; }
+.finish-title { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 900; }
+.finish-sub { font-size: 15px; color: rgba(255,255,255,.5); line-height: 1.6; }
+.score-row { display: flex; gap: 2.5rem; }
+.score-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.score-num { font-family: 'Outfit', sans-serif; font-size: 38px; font-weight: 900; line-height: 1; }
+.score-lbl { font-size: 12px; color: rgba(255,255,255,.45); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.finish-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.fin-btn { border: none; border-radius: 11px; padding: 12px 26px; font-size: 15px; font-weight: 700; font-family: 'Outfit', sans-serif; cursor: pointer; transition: all .15s; }
+.fin-btn-white { background: #fff; color: var(--ink); }
+.fin-btn-white:hover { background: #f0ede8; }
+.fin-btn-ghost { background: rgba(255,255,255,.1); color: #fff; border: 1.5px solid rgba(255,255,255,.18); }
+.fin-btn-ghost:hover { background: rgba(255,255,255,.18); }
+
+/* ══ PRINT ══ */
+@media print {
+  #setupScreen, #finishScreen { display: none !important; }
+  #presentScreen { display: flex !important; background: #fff; color: #000; }
+  .p-topbar, .p-controls, .key-hint, .timer-bar-wrap, .reveal-hint { display: none !important; }
+  .p-stage { padding: 1rem; }
+  .p-question { color: #000; font-size: 24px; }
+  .tf-reveal-btn { font-size: 22px; padding: 14px 32px; }
+  .tf-reveal-btn.t-btn { background: #d5f5e3; color: #1a5e35; border-color: #27ae60; }
+  .tf-reveal-btn.f-btn { background: #fdecea; color: #7b241c; border-color: #e74c3c; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<section id="setupScreen" class="screen on">
+  <div class="topbar">
+    <span class="topbar-icon">✅</span>
+    <span class="topbar-title">True / False Builder <span class="topbar-sub">teacher toolkit</span></span>
+    <button class="tbtn" onclick="window.print()">🖨 Print</button>
+    <button class="tbtn go" id="btnPresent" onclick="startPresenting()" disabled>▶ Present</button>
+  </div>
+
+  <div class="setup-body">
+    <div class="setup-hint">
+      Build a set of True / False questions, then click <strong>▶ Present</strong> to project them full-screen.
+      Students write T or F on their mini whiteboards — click <strong>True</strong> or <strong>False</strong> on screen to reveal the answer.
+      Add an optional explanation to display after the reveal.
+    </div>
+
+    <!-- Set name + saved sets -->
+    <div class="set-name-row">
+      <input class="set-name-inp" id="setNameInp" type="text" placeholder="Question set name (e.g. Fractions — Year 7)" maxlength="70" oninput="onSetNameChange()" />
+    </div>
+
+    <div class="saved-row">
+      <span class="saved-lbl">💾 Saved sets:</span>
+      <select class="saved-sel" id="savedSel"><option value="">— no saved sets —</option></select>
+      <button class="sv-btn load" onclick="loadSet()">Load</button>
+      <button class="sv-btn" onclick="saveSet()">Save</button>
+      <button class="sv-btn" onclick="deleteSet()">Delete</button>
+    </div>
+
+    <!-- Import -->
+    <button class="import-toggle" onclick="toggleImport()">⬇ Paste questions in bulk</button>
+    <div class="import-box" id="importBox" style="display:none">
+      <textarea class="import-ta" id="importTa" placeholder="One question per line. End each line with | T or | F to set the answer.&#10;&#10;Example:&#10;The Great Wall of China is visible from space | F&#10;Water boils at 100°C at sea level | T&#10;Shakespeare wrote 37 plays | T"></textarea>
+      <div class="import-hint">Format: <strong>Question text | T</strong> or <strong>Question text | F</strong> &nbsp;·&nbsp; Lines without | T/F will default to unanswered.</div>
+      <button class="import-btn" onclick="importQuestions()">Import questions</button>
+    </div>
+
+    <!-- Questions list -->
+    <div class="q-list" id="qList"></div>
+    <button class="add-q-btn" onclick="addQ()">＋ Add question</button>
+  </div>
+</section>
+
+<!-- ══ PRESENT ══ -->
+<section id="presentScreen" class="screen">
+  <div class="p-topbar">
+    <div class="p-set-name" id="pSetName">True / False</div>
+    <div class="p-prog-wrap">
+      <div class="p-prog-dots" id="pProgDots"></div>
+      <div class="p-prog-text" id="pProgText">1 / 1</div>
+    </div>
+    <button class="p-back" onclick="goSetup()">← Edit</button>
+  </div>
+
+  <div class="timer-bar-wrap" id="timerBarWrap" style="display:none">
+    <div class="timer-bar-fill" id="timerBarFill" style="width:100%"></div>
+  </div>
+
+  <div class="p-stage">
+    <div class="q-badge" id="qBadge">Question 1</div>
+    <div class="p-question" id="pQuestion">Loading…</div>
+
+    <div class="tf-reveal-row">
+      <button class="tf-reveal-btn t-btn" id="trueBtnReveal" onclick="reveal('true')">TRUE</button>
+      <button class="tf-reveal-btn f-btn" id="falseBtnReveal" onclick="reveal('false')">FALSE</button>
+    </div>
+
+    <div class="reveal-hint" id="revealHint">👆 Click the correct answer to reveal it</div>
+    <div class="explanation-box" id="explanationBox">
+      <div class="explanation-label">Explanation</div>
+      <span id="explanationText"></span>
+    </div>
+  </div>
+
+  <div class="p-controls">
+    <button class="ctrl-btn ctrl-prev" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
+    <button class="ctrl-btn ctrl-reveal" id="autoRevealBtn" onclick="autoReveal()">🔑 Reveal answer</button>
+    <button class="ctrl-btn ctrl-next" id="nextBtn" onclick="navigate(1)">Next →</button>
+  </div>
+
+  <div class="key-hint">
+    <kbd class="kbd">←</kbd><kbd class="kbd">→</kbd> navigate &nbsp;·&nbsp; <kbd class="kbd">Space</kbd> reveal &nbsp;·&nbsp; <kbd class="kbd">T</kbd> = True &nbsp;·&nbsp; <kbd class="kbd">F</kbd> = False &nbsp;·&nbsp; <kbd class="kbd">Esc</kbd> back to editor
+  </div>
+</section>
+
+<!-- ══ FINISH ══ -->
+<section id="finishScreen" class="screen">
+  <div class="finish-icon">🎉</div>
+  <div class="finish-title">Set complete!</div>
+  <div class="finish-sub" id="finishSub">All questions answered</div>
+  <div class="score-row" id="scoreRow"></div>
+  <div class="finish-btns">
+    <button class="fin-btn fin-btn-ghost" onclick="restartPresenting()">↩ Restart set</button>
+    <button class="fin-btn fin-btn-white" onclick="goSetup()">← Back to editor</button>
+  </div>
+</section>
+
+<script>
+/* ── STATE ── */
+let qs = [];
+let cur = 0;
+let answered = [];  // 'true' | 'false' | null per question
+let timerInt = null, timerLeft = 0;
+let saved = {};
+
+/* ── INIT ── */
+(function () {
+  try { saved = JSON.parse(localStorage.getItem('tfSets') || '{}'); } catch (e) {}
+  refreshSavedSel();
+  renderQList();
+})();
+
+/* ── QUESTION MANAGEMENT ── */
+function addQ(data) {
+  qs.push(data || { id: uid(), text: '', answer: null, explanation: '', timer: 0 });
+  renderQList();
+}
+
+function removeQ(id) {
+  qs = qs.filter(q => q.id !== id);
+  renderQList();
+}
+
+function renderQList() {
+  const el = document.getElementById('qList');
+  document.getElementById('btnPresent').disabled = qs.length === 0 || qs.some(q => !q.answer);
+
+  if (qs.length === 0) {
+    el.innerHTML = '<div class="empty-qs">No questions yet — click ＋ Add question to get started, or paste in bulk above.</div>';
+    return;
+  }
+
+  el.innerHTML = qs.map((q, i) => `
+    <div class="q-card" id="qc${q.id}">
+      <div class="q-num">${i + 1}</div>
+      <div class="q-main">
+        <textarea class="q-inp" rows="2"
+          placeholder="Enter your true/false statement…"
+          data-id="${q.id}" data-f="text"
+          maxlength="300">${x(q.text)}</textarea>
+        <div class="q-footer">
+          <div class="tf-toggle">
+            <button class="tf-opt${q.answer === 'true' ? ' true-active' : ''}"
+              onclick="setAnswer('${q.id}','true')">TRUE</button>
+            <button class="tf-opt${q.answer === 'false' ? ' false-active' : ''}"
+              onclick="setAnswer('${q.id}','false')">FALSE</button>
+          </div>
+          <div class="timer-row">
+            <span>⏱</span>
+            <input class="timer-inp" type="number" min="0" max="300"
+              value="${q.timer}" data-id="${q.id}" data-f="timer"
+              placeholder="0" title="Timer (seconds, 0 = off)" />
+            <span>sec</span>
+          </div>
+        </div>
+        <input class="q-explanation-inp" type="text"
+          placeholder="Explanation shown after reveal (optional)…"
+          value="${x(q.explanation)}" data-id="${q.id}" data-f="explanation"
+          maxlength="200" />
+      </div>
+      <button class="q-rm" onclick="removeQ('${q.id}')" title="Remove">✕</button>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('[data-f="text"]').forEach(e =>
+    e.addEventListener('input', ev => {
+      const q = qs.find(q => q.id === ev.target.dataset.id);
+      if (q) { q.text = ev.target.value; updatePresentBtn(); }
+    })
+  );
+  el.querySelectorAll('[data-f="timer"]').forEach(e =>
+    e.addEventListener('change', ev => {
+      const q = qs.find(q => q.id === ev.target.dataset.id);
+      if (q) q.timer = Math.max(0, parseInt(ev.target.value) || 0);
+    })
+  );
+  el.querySelectorAll('[data-f="explanation"]').forEach(e =>
+    e.addEventListener('input', ev => {
+      const q = qs.find(q => q.id === ev.target.dataset.id);
+      if (q) q.explanation = ev.target.value;
+    })
+  );
+}
+
+function setAnswer(id, ans) {
+  const q = qs.find(q => q.id === id);
+  if (q) { q.answer = ans; renderQList(); }
+}
+
+function updatePresentBtn() {
+  document.getElementById('btnPresent').disabled =
+    qs.length === 0 || qs.some(q => !q.answer || !q.text.trim());
+}
+
+function onSetNameChange() {
+  // nothing extra needed — value read at save time
+}
+
+/* ── IMPORT ── */
+function toggleImport() {
+  const box = document.getElementById('importBox');
+  box.style.display = box.style.display === 'none' ? '' : 'none';
+}
+
+function importQuestions() {
+  const lines = document.getElementById('importTa').value.split('\n').map(l => l.trim()).filter(Boolean);
+  lines.forEach(line => {
+    let text = line, answer = null;
+    const match = line.match(/\|\s*(T|F|TRUE|FALSE)\s*$/i);
+    if (match) {
+      answer = match[1].toUpperCase().startsWith('T') ? 'true' : 'false';
+      text = line.slice(0, line.lastIndexOf('|')).trim();
+    }
+    if (text) addQ({ id: uid(), text, answer, explanation: '', timer: 0 });
+  });
+  document.getElementById('importTa').value = '';
+  document.getElementById('importBox').style.display = 'none';
+}
+
+/* ── SAVE/LOAD ── */
+function saveSet() {
+  const name = document.getElementById('setNameInp').value.trim() || 'Untitled set';
+  if (qs.length === 0) { alert('Add some questions first!'); return; }
+  saved[name] = { qs: qs.map(q => ({ ...q })), name };
+  try { localStorage.setItem('tfSets', JSON.stringify(saved)); } catch (e) {}
+  refreshSavedSel(name);
+  const btn = event.target;
+  btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = 'Save', 1600);
+}
+
+function loadSet() {
+  const key = document.getElementById('savedSel').value;
+  if (!key || !saved[key]) return;
+  qs = saved[key].qs.map(q => ({ ...q }));
+  document.getElementById('setNameInp').value = saved[key].name || key;
+  renderQList();
+}
+
+function deleteSet() {
+  const key = document.getElementById('savedSel').value;
+  if (!key || !confirm(`Delete "${key}"?`)) return;
+  delete saved[key];
+  try { localStorage.setItem('tfSets', JSON.stringify(saved)); } catch (e) {}
+  refreshSavedSel();
+}
+
+function refreshSavedSel(sel) {
+  const el = document.getElementById('savedSel');
+  const keys = Object.keys(saved);
+  el.innerHTML = keys.length
+    ? keys.map(k => `<option value="${x(k)}"${k === sel ? ' selected' : ''}>${x(k)}</option>`).join('')
+    : '<option value="">— no saved sets —</option>';
+}
+
+/* ── PRESENTING ══ */
+function startPresenting() {
+  const valid = qs.filter(q => q.text.trim() && q.answer);
+  if (valid.length === 0) return;
+  answered = valid.map(() => null);
+  cur = 0;
+  showScreen('presentScreen');
+  loadQ(cur);
+}
+
+function restartPresenting() {
+  answered = qs.map(() => null);
+  cur = 0;
+  showScreen('presentScreen');
+  loadQ(cur);
+}
+
+function loadQ(i) {
+  clearTimer();
+  const q = qs[i];
+
+  document.getElementById('pSetName').textContent =
+    document.getElementById('setNameInp').value.trim() || 'True / False';
+  document.getElementById('qBadge').textContent = 'Question ' + (i + 1);
+  document.getElementById('pQuestion').textContent = q.text || '…';
+
+  // Reset reveal buttons
+  const tBtn = document.getElementById('trueBtnReveal');
+  const fBtn = document.getElementById('falseBtnReveal');
+  tBtn.className = 'tf-reveal-btn t-btn';
+  fBtn.className = 'tf-reveal-btn f-btn';
+
+  // Restore revealed state if already answered this question
+  if (answered[i]) {
+    applyReveal(answered[i], false);
+  }
+
+  // Explanation
+  const expBox = document.getElementById('explanationBox');
+  expBox.classList.remove('show');
+  document.getElementById('explanationText').textContent = q.explanation || '';
+
+  // Hint
+  document.getElementById('revealHint').classList.toggle('hidden', !!answered[i]);
+
+  // Progress
+  updateProgress();
+
+  // Controls
+  document.getElementById('prevBtn').disabled = i === 0;
+  document.getElementById('nextBtn').textContent = i >= qs.length - 1 ? 'Finish ✓' : 'Next →';
+  document.getElementById('autoRevealBtn').style.display = answered[i] ? 'none' : '';
+
+  // Timer
+  if (q.timer > 0 && !answered[i]) startTimer(q.timer);
+  else document.getElementById('timerBarWrap').style.display = 'none';
+}
+
+function reveal(choice) {
+  if (answered[cur]) return; // already revealed
+  answered[cur] = choice;
+  applyReveal(choice, true);
+}
+
+function autoReveal() {
+  const q = qs[cur];
+  if (!answered[cur]) reveal(q.answer);
+}
+
+function applyReveal(choice, animate) {
+  const q = qs[cur];
+  const tBtn = document.getElementById('trueBtnReveal');
+  const fBtn = document.getElementById('falseBtnReveal');
+  clearTimer();
+
+  // Correct button gets highlighted, wrong one dims
+  if (q.answer === 'true') {
+    tBtn.className = 'tf-reveal-btn t-btn revealed-correct';
+    fBtn.className = 'tf-reveal-btn f-btn revealed-wrong';
+  } else {
+    fBtn.className = 'tf-reveal-btn f-btn revealed-correct';
+    tBtn.className = 'tf-reveal-btn t-btn revealed-wrong';
+  }
+
+  document.getElementById('revealHint').classList.add('hidden');
+  document.getElementById('autoRevealBtn').style.display = 'none';
+
+  // Show explanation if present
+  const expBox = document.getElementById('explanationBox');
+  const expTxt = document.getElementById('explanationText');
+  if (qs[cur].explanation) {
+    expTxt.textContent = qs[cur].explanation;
+    if (animate) setTimeout(() => expBox.classList.add('show'), 400);
+    else expBox.classList.add('show');
+  }
+}
+
+/* ── NAVIGATION ── */
+function navigate(dir) {
+  const next = cur + dir;
+  if (next < 0) return;
+  if (next >= qs.length) { showFinish(); return; }
+  cur = next;
+  loadQ(cur);
+}
+
+function updateProgress() {
+  const dots = document.getElementById('pProgDots');
+  // max 20 dots shown
+  const show = Math.min(qs.length, 20);
+  dots.innerHTML = qs.slice(0, show).map((q, i) => {
+    let cls = 'p-prog-dot';
+    if (i === cur) cls += ' cur';
+    else if (answered[i] !== null) cls += ' done-' + (q.answer || 'true');
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  document.getElementById('pProgText').textContent = (cur + 1) + ' / ' + qs.length;
+}
+
+/* ── TIMER ── */
+function startTimer(secs) {
+  timerLeft = secs;
+  const wrap = document.getElementById('timerBarWrap');
+  const fill = document.getElementById('timerBarFill');
+  wrap.style.display = 'block';
+  fill.style.width = '100%';
+  fill.style.background = 'var(--true)';
+  fill.style.transition = 'none';
+  setTimeout(() => {
+    fill.style.transition = `width ${secs}s linear, background .3s`;
+    fill.style.width = '0%';
+    fill.style.background = 'var(--false)';
+  }, 50);
+  timerInt = setInterval(() => {
+    timerLeft--;
+    if (timerLeft <= 0) { clearTimer(); if (!answered[cur]) autoReveal(); }
+  }, 1000);
+}
+
+function clearTimer() {
+  clearInterval(timerInt);
+  document.getElementById('timerBarWrap').style.display = 'none';
+}
+
+/* ── FINISH ── */
+function showFinish() {
+  const total = qs.length;
+  const revealed = answered.filter(a => a !== null).length;
+  document.getElementById('finishSub').textContent =
+    `${revealed} of ${total} question${total !== 1 ? 's' : ''} revealed`;
+
+  const trueCount = qs.filter(q => q.answer === 'true').length;
+  const falseCount = qs.filter(q => q.answer === 'false').length;
+  document.getElementById('scoreRow').innerHTML = `
+    <div class="score-item">
+      <div class="score-num" style="color:var(--true)">${trueCount}</div>
+      <div class="score-lbl">True</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" style="color:rgba(255,255,255,.3)">${total}</div>
+      <div class="score-lbl">Total</div>
+    </div>
+    <div class="score-item">
+      <div class="score-num" style="color:var(--false)">${falseCount}</div>
+      <div class="score-lbl">False</div>
+    </div>
+  `;
+  showScreen('finishScreen');
+}
+
+/* ── KEYBOARD SHORTCUTS ── */
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('presentScreen').classList.contains('on')) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  switch (e.key) {
+    case 'ArrowRight': case 'ArrowDown': e.preventDefault(); navigate(1); break;
+    case 'ArrowLeft':  case 'ArrowUp':   e.preventDefault(); navigate(-1); break;
+    case ' ':  e.preventDefault(); autoReveal(); break;
+    case 't': case 'T': e.preventDefault(); if (!answered[cur]) reveal('true'); break;
+    case 'f': case 'F': e.preventDefault(); if (!answered[cur]) reveal('false'); break;
+    case 'Escape': goSetup(); break;
+  }
+});
+
+/* ── NAV ── */
+function goSetup() {
+  clearTimer();
+  showScreen('setupScreen');
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+/* ── UTILS ── */
+function uid() { return 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function x(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+</script>
+</body>
+</html>
