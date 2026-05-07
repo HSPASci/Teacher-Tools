@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Concept Check — Student</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d1520; --surf: rgba(255,255,255,.06); --bd: rgba(255,255,255,.12);
+  --txt: #fff; --muted: rgba(255,255,255,.5); --dim: rgba(255,255,255,.25);
+  --green: #27ae60; --amber: #e67e22; --blue: #2980b9; --red: #e74c3c;
+}
+html, body { height: 100%; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--txt); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; padding: 1.5rem 1rem max(1.5rem, env(safe-area-inset-bottom)); overflow-y: auto; }
+
+.screen { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 560px; gap: 1.1rem; }
+.screen.on { display: flex; }
+
+/* ── JOIN ── */
+.app-icon { font-size: 42px; line-height: 1; margin-top: 1.5rem; }
+.app-name { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 900; color: var(--txt); }
+.app-sub { font-size: 14px; color: var(--muted); line-height: 1.5; text-align: center; }
+
+.name-inp { width: 100%; background: var(--surf); border: 2px solid var(--bd); border-radius: 14px; padding: .85rem 1.1rem; font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--txt); outline: none; text-align: center; transition: border-color .15s; }
+.name-inp:focus { border-color: rgba(255,255,255,.35); }
+.name-inp::placeholder { color: rgba(255,255,255,.25); }
+
+.code-inp { width: 100%; background: var(--surf); border: 2px solid var(--bd); border-radius: 14px; padding: .85rem 1.1rem; font-family: 'Outfit', sans-serif; font-size: clamp(24px,7vw,36px); font-weight: 900; color: var(--txt); text-align: center; letter-spacing: .2em; outline: none; text-transform: uppercase; transition: border-color .15s; caret-color: var(--green); }
+.code-inp:focus { border-color: rgba(255,255,255,.35); }
+.code-inp::placeholder { color: rgba(255,255,255,.2); font-size: clamp(16px,5vw,24px); letter-spacing: .1em; }
+
+.join-btn { width: 100%; background: var(--green); border: none; border-radius: 14px; padding: 16px; font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 900; color: #fff; cursor: pointer; transition: background .15s, transform .1s; }
+.join-btn:hover { background: #219a52; }
+.join-btn:active { transform: scale(.98); }
+.join-btn:disabled { background: #333; cursor: not-allowed; color: rgba(255,255,255,.35); }
+.err-box { width: 100%; background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.3); border-radius: 10px; padding: .75rem 1rem; font-size: 14px; color: var(--red); line-height: 1.5; text-align: center; }
+
+/* ── CONNECTING ── */
+.spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.1); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; margin-top: 2rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.conn-txt { font-family: 'Outfit', sans-serif; font-size: 17px; font-weight: 700; color: var(--muted); }
+
+/* ── WAITING ── */
+.wait-icon { font-size: 50px; line-height: 1; margin-top: 1.5rem; }
+.wait-title { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; }
+.wait-sub { font-size: 14px; color: var(--muted); line-height: 1.6; text-align: center; }
+.dots span { display: inline-block; animation: dot 1.2s ease-in-out infinite; font-size: 22px; color: var(--muted); margin: 0 2px; }
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dot { 0%,80%,100%{transform:scale(.6);opacity:.3} 40%{transform:scale(1);opacity:1} }
+.sess-tag { background: var(--surf); border: 1px solid var(--bd); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--dim); font-family: 'Outfit', sans-serif; font-weight: 600; letter-spacing: .08em; }
+.student-name-tag { font-size: 12px; color: var(--dim); font-family: 'DM Sans', sans-serif; }
+
+/* ── QUESTION ── */
+.q-meta { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.q-badge { background: var(--surf); border: 1px solid var(--bd); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; color: var(--dim); font-family: 'Outfit', sans-serif; }
+.q-marks { background: rgba(41,128,185,.2); border: 1px solid rgba(41,128,185,.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: #74b9e8; font-family: 'Outfit', sans-serif; }
+.q-type { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.2); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: rgba(255,150,140,.8); font-family: 'Outfit', sans-serif; }
+
+.q-text { font-family: 'Outfit', sans-serif; font-size: clamp(16px,4vw,22px); font-weight: 800; color: var(--txt); line-height: 1.4; text-align: center; }
+
+/* Answer area */
+.answer-wrap { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.answer-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); align-self: flex-start; }
+.answer-ta { width: 100%; background: var(--surf); border: 2px solid var(--bd); border-radius: 14px; padding: .9rem 1.1rem; font-family: 'DM Sans', sans-serif; font-size: 16px; color: var(--txt); outline: none; resize: none; line-height: 1.55; transition: border-color .15s; min-height: 130px; caret-color: var(--green); }
+.answer-ta:focus { border-color: rgba(255,255,255,.3); }
+.answer-ta::placeholder { color: rgba(255,255,255,.2); font-size: 14px; }
+.answer-ta:disabled { opacity: .6; cursor: not-allowed; }
+.char-count { font-size: 11px; color: var(--dim); align-self: flex-end; font-family: 'DM Sans', sans-serif; }
+
+.submit-btn { width: 100%; background: var(--blue); border: none; border-radius: 14px; padding: 15px; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 900; color: #fff; cursor: pointer; transition: background .15s, transform .1s; }
+.submit-btn:hover:not(:disabled) { background: #1a6ea8; }
+.submit-btn:active:not(:disabled) { transform: scale(.98); }
+.submit-btn:disabled { background: #333; cursor: not-allowed; color: rgba(255,255,255,.35); }
+.submit-btn.submitted { background: var(--green); }
+
+/* Submitted state */
+.submitted-wrap { width: 100%; background: rgba(39,174,96,.1); border: 1.5px solid rgba(39,174,96,.25); border-radius: 16px; padding: 1.1rem 1.25rem; display: flex; flex-direction: column; gap: 8px; }
+.sub-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--green); opacity: .8; }
+.sub-answer { font-size: 14px; color: rgba(255,255,255,.8); line-height: 1.6; font-family: 'DM Sans', sans-serif; white-space: pre-wrap; word-break: break-word; }
+.sub-note { font-size: 13px; color: var(--muted); line-height: 1.5; text-align: center; }
+
+/* ── MODEL ANSWER ── */
+.ma-revealed { font-size: 13px; font-weight: 700; color: var(--green); text-align: center; opacity: .8; letter-spacing: .04em; text-transform: uppercase; }
+.model-answer-box { width: 100%; background: rgba(39,174,96,.1); border: 2px solid rgba(39,174,96,.3); border-radius: 16px; padding: 1.1rem 1.25rem; animation: fadeUp .5s ease; }
+.ma-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--green); margin-bottom: 6px; opacity: .8; }
+.ma-text { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,.9); line-height: 1.7; white-space: pre-wrap; }
+.ma-marking { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(39,174,96,.2); font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.5; font-style: italic; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+.your-answer-label { font-size: 12px; color: var(--muted); font-weight: 600; text-align: center; }
+
+/* ── NEXT WAITING ── */
+.next-icon { font-size: 36px; }
+.next-txt { font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--muted); text-align: center; }
+
+/* ── SUMMARY ── */
+.sum-icon { font-size: 50px; margin-top: 1.5rem; }
+.sum-title { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 900; }
+.sum-note { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.6; max-width: 360px; }
+.rejoin-btn { background: var(--surf); border: 1.5px solid var(--bd); border-radius: 12px; padding: 12px 24px; font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; color: var(--txt); cursor: pointer; transition: background .15s; }
+.rejoin-btn:hover { background: rgba(255,255,255,.12); }
+
+/* ── DC ── */
+.dc-icon { font-size: 44px; opacity: .55; margin-top: 1.5rem; }
+.dc-title { font-family: 'Outfit', sans-serif; font-size: 19px; font-weight: 800; color: var(--muted); }
+.dc-msg { font-size: 13px; color: var(--dim); text-align: center; line-height: 1.5; max-width: 320px; }
+</style>
+</head>
+<body>
+
+<!-- JOIN -->
+<div class="screen on" id="joinScreen">
+  <div class="app-icon">🎯</div>
+  <div class="app-name">Concept Check</div>
+  <div class="app-sub">Enter your name and the session code<br>shown on the board</div>
+  <input class="name-inp" id="nameInp" type="text" maxlength="30" placeholder="Your name" autocomplete="given-name" onkeydown="if(event.key==='Enter')document.getElementById('codeInp').focus()" />
+  <input class="code-inp" id="codeInp" type="text" maxlength="6" placeholder="CODE" autocomplete="off" autocorrect="off" spellcheck="false" oninput="onCodeInput()" onkeydown="if(event.key==='Enter')tryJoin()" />
+  <button class="join-btn" id="joinBtn" onclick="tryJoin()" disabled>Join session →</button>
+  <div class="err-box" id="errBox" style="display:none;"></div>
+</div>
+
+<!-- CONNECTING -->
+<div class="screen" id="connectingScreen">
+  <div class="spinner"></div>
+  <div class="conn-txt" id="connTxt">Connecting…</div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="waitingScreen">
+  <div class="wait-icon">⏳</div>
+  <div class="wait-title">Waiting for the teacher…</div>
+  <div class="wait-sub">You're in! The question will appear here when your teacher opens it.</div>
+  <div class="dots"><span>•</span><span>•</span><span>•</span></div>
+  <div class="sess-tag" id="sessTag">Session: ——</div>
+  <div class="student-name-tag" id="studentNameTag"></div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="questionScreen">
+  <div class="q-meta">
+    <span class="q-badge" id="qBadge">Q 1 of 1</span>
+    <span class="q-type" id="qTypeTag">Short answer</span>
+    <span class="q-marks" id="qMarksTag">2 marks</span>
+  </div>
+  <div class="q-text" id="qTextEl">Loading…</div>
+
+  <div class="answer-wrap" id="answerWrap">
+    <div class="answer-label">Your answer</div>
+    <textarea class="answer-ta" id="answerTa" placeholder="Type your answer here…" maxlength="2000" oninput="onAnswerInput()"></textarea>
+    <div class="char-count" id="charCount">0 / 2000</div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitAnswer()" disabled>Submit answer</button>
+
+  <div class="submitted-wrap" id="submittedWrap" style="display:none;">
+    <div class="sub-label">✅ Answer submitted</div>
+    <div class="sub-answer" id="subAnswerTxt"></div>
+  </div>
+
+  <div class="sub-note" id="subNote" style="display:none;">
+    Waiting for the teacher to reveal the answer…
+    <div class="dots" style="justify-content:center;display:flex;gap:4px;margin-top:6px;"><span>•</span><span>•</span><span>•</span></div>
+  </div>
+</div>
+
+<!-- MODEL ANSWER -->
+<div class="screen" id="answerScreen">
+  <div class="q-meta">
+    <span class="q-badge" id="ansBadge">Q 1 of 1</span>
+  </div>
+  <div class="q-text" id="ansQText" style="font-size:16px;opacity:.7;"></div>
+
+  <div class="ma-revealed">✅ Answer revealed</div>
+
+  <div class="model-answer-box">
+    <div class="ma-label">Model answer</div>
+    <div class="ma-text" id="maText"></div>
+    <div class="ma-marking" id="maMarking" style="display:none;"></div>
+  </div>
+
+  <div class="your-answer-label">Your answer:</div>
+  <div class="submitted-wrap" id="ansYourAnswer">
+    <div class="sub-answer" id="ansYourText" style="color:rgba(255,255,255,.6);"></div>
+  </div>
+
+  <div class="sub-note">Waiting for the next question…<div class="dots" style="justify-content:center;display:flex;gap:4px;margin-top:6px;"><span>•</span><span>•</span><span>•</span></div></div>
+</div>
+
+<!-- SUMMARY -->
+<div class="screen" id="summaryScreen">
+  <div class="sum-icon">🎉</div>
+  <div class="sum-title">All done!</div>
+  <div class="sum-note">Your teacher is showing the summary on the board. Great work today!</div>
+  <button class="rejoin-btn" onclick="goJoin()">← Join another session</button>
+</div>
+
+<!-- DISCONNECTED -->
+<div class="screen" id="dcScreen">
+  <div class="dc-icon">📵</div>
+  <div class="dc-title">Disconnected</div>
+  <div class="dc-msg" id="dcMsg">Connection lost.</div>
+  <button class="rejoin-btn" onclick="goJoin()">Try again</button>
+</div>
+
+<script>
+const typeLabels = { short:'Short answer', extended:'Extended response', multi:'Multiple choice', calc:'Calculation', define:'Define / Identify' };
+let peer = null, teacherConn = null;
+let myId = getOrMakeId(), myName = '', sessionCode = '';
+let currentQ = null, currentQIndex = 0, myAnswer = '', submitted = false;
+
+function getOrMakeId() {
+  let id = localStorage.getItem('ccStudentId');
+  if (!id) { id = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); localStorage.setItem('ccStudentId', id); }
+  return id;
+}
+
+/* ── AUTO-JOIN FROM URL ── */
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const c = p.get('code');
+  if (c) { document.getElementById('codeInp').value = c.toUpperCase(); onCodeInput(); }
+})();
+
+function onCodeInput() {
+  const v = document.getElementById('codeInp').value.trim();
+  document.getElementById('joinBtn').disabled = v.length < 4;
+  document.getElementById('errBox').style.display = 'none';
+}
+
+function tryJoin() {
+  const code = document.getElementById('codeInp').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const name = document.getElementById('nameInp').value.trim() || 'Student';
+  if (code.length < 4) return;
+  myName = name; sessionCode = code;
+  showErr('');
+  showScreen('connectingScreen');
+  document.getElementById('connTxt').textContent = 'Connecting to ' + code + '…';
+  connect(code);
+}
+
+function connect(code) {
+  if (peer) { try { peer.destroy(); } catch(e) {} }
+  peer = new Peer();
+  peer.on('open', () => {
+    teacherConn = peer.connect('conceptcheck-' + code.toLowerCase(), { reliable: true });
+    let opened = false;
+    const timeout = setTimeout(() => {
+      if (!opened) showDC('Could not find session "' + code + '". Check the code and try again.');
+    }, 12000);
+    teacherConn.on('open', () => {
+      opened = true; clearTimeout(timeout);
+      document.getElementById('sessTag').textContent = 'Session: ' + code;
+      document.getElementById('studentNameTag').textContent = 'Joined as: ' + myName;
+      showScreen('waitingScreen');
+    });
+    teacherConn.on('data', onTeacherData);
+    teacherConn.on('close', () => showDC('The session was closed by the teacher.'));
+    teacherConn.on('error', () => showDC('Connection error. Check your network and try again.'));
+  });
+  peer.on('error', err => {
+    if (err.type === 'peer-unavailable') showDC('Session "' + code + '" not found. Check the code and try again.');
+    else showDC('Connection error (' + err.type + ').');
+  });
+}
+
+function onTeacherData(data) {
+  if (!data) return;
+  if (data.type === 'state') {
+    const { status, qIndex, total, question, answer, marking } = data.data;
+    currentQIndex = qIndex; currentQ = question;
+
+    if (status === 'wait') {
+      submitted = false; myAnswer = '';
+      showScreen('waitingScreen');
+    } else if (status === 'open') {
+      if (submitted) {
+        // Already answered — show submitted state
+        showQuestionSubmitted();
+      } else {
+        showQuestion(question, qIndex, total);
+      }
+    } else if (status === 'closed') {
+      if (answer) {
+        showAnswer(question, qIndex, total, answer, marking);
+      } else {
+        // closed but no answer yet — show waiting
+        showQuestionSubmitted();
+      }
+    }
+  } else if (data.type === 'ack') {
+    // server acknowledged our submission
+  } else if (data.type === 'summary') {
+    showScreen('summaryScreen');
+  }
+}
+
+function showQuestion(q, qi, total) {
+  submitted = false; myAnswer = '';
+  currentQ = q;
+
+  document.getElementById('qBadge').textContent = 'Q ' + (qi+1) + ' of ' + total;
+  document.getElementById('qTypeTag').textContent = typeLabels[q.type] || q.type;
+  document.getElementById('qMarksTag').textContent = q.marks + ' mark' + (q.marks!==1?'s':'');
+  document.getElementById('qTextEl').textContent = q.text || '';
+
+  // Reset answer area
+  const ta = document.getElementById('answerTa');
+  ta.value = ''; ta.disabled = false;
+  document.getElementById('charCount').textContent = '0 / 2000';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').className = 'submit-btn';
+  document.getElementById('submitBtn').textContent = 'Submit answer';
+  document.getElementById('submittedWrap').style.display = 'none';
+  document.getElementById('answerWrap').style.display = '';
+  document.getElementById('subNote').style.display = 'none';
+
+  showScreen('questionScreen');
+  setTimeout(() => ta.focus(), 200);
+}
+
+function showQuestionSubmitted() {
+  // Already answered — show read-only submitted state
+  document.getElementById('answerWrap').style.display = 'none';
+  document.getElementById('submitBtn').style.display = 'none';
+  document.getElementById('submittedWrap').style.display = '';
+  document.getElementById('subAnswerTxt').textContent = myAnswer || '(submitted)';
+  document.getElementById('subNote').style.display = '';
+  showScreen('questionScreen');
+}
+
+function showAnswer(q, qi, total, answer, marking) {
+  document.getElementById('ansBadge').textContent = 'Q ' + (qi+1) + ' of ' + total;
+  document.getElementById('ansQText').textContent = q.text;
+  document.getElementById('maText').textContent = answer;
+  const markEl = document.getElementById('maMarking');
+  if (marking) { markEl.textContent = '📝 ' + marking; markEl.style.display = ''; }
+  else markEl.style.display = 'none';
+
+  document.getElementById('ansYourText').textContent = myAnswer || '(no answer submitted)';
+  document.getElementById('ansYourAnswer').style.opacity = myAnswer ? '1' : '0.4';
+
+  showScreen('answerScreen');
+}
+
+function onAnswerInput() {
+  const val = document.getElementById('answerTa').value;
+  document.getElementById('charCount').textContent = val.length + ' / 2000';
+  document.getElementById('submitBtn').disabled = val.trim().length === 0;
+}
+
+function submitAnswer() {
+  const text = document.getElementById('answerTa').value.trim();
+  if (!text || submitted) return;
+  myAnswer = text;
+  submitted = true;
+
+  // Send to teacher
+  if (teacherConn && teacherConn.open) {
+    try {
+      teacherConn.send({ type: 'response', data: { qIndex: currentQIndex, text, name: myName, sid: myId } });
+    } catch(e) {}
+  }
+
+  // Update UI
+  document.getElementById('answerTa').disabled = true;
+  document.getElementById('submitBtn').className = 'submit-btn submitted';
+  document.getElementById('submitBtn').textContent = '✅ Submitted!';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submittedWrap').style.display = '';
+  document.getElementById('subAnswerTxt').textContent = text;
+  document.getElementById('subNote').style.display = '';
+}
+
+function showDC(msg) { document.getElementById('dcMsg').textContent = msg || 'Connection lost.'; showScreen('dcScreen'); }
+function showErr(msg) { const el = document.getElementById('errBox'); if (msg) { el.textContent = msg; el.style.display = ''; } else el.style.display = 'none'; }
+function goJoin() { showScreen('joinScreen'); }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); document.getElementById(id).classList.add('on'); window.scrollTo(0,0); }
+</script>
+</body>
+</html>
